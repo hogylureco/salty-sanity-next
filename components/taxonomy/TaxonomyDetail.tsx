@@ -33,6 +33,7 @@ export async function generateTaxonomyStaticParams(types: string[]) {
   const slugs = (await sanityFetch({
     query: taxonomySlugsQuery,
     params: { types },
+    tags: ['spot'],
   })) as Array<{ slug: string | null }>
   return slugs
     .filter((s): s is { slug: string } => Boolean(s.slug))
@@ -48,7 +49,7 @@ export async function generateTaxonomyMetadata(
   const doc = (await sanityFetch({
     query: taxonomyDocBySlugQuery,
     params: { types, slug },
-    tags: ['spot', `${segment}:${slug}`],
+    tags: ['spot', ...types.map((type) => `${type}:${slug}`)],
   })) as TaxonomyDoc | null
   if (!doc) return {}
   const description = doc.descriptionText
@@ -72,7 +73,7 @@ export async function TaxonomyDetail({
   const doc = (await sanityFetch({
     query: taxonomyDocBySlugQuery,
     params: { types, slug },
-    tags: ['spot', `${segment}:${slug}`],
+    tags: ['spot', ...types.map((type) => `${type}:${slug}`)],
   })) as TaxonomyDoc | null
   if (!doc) notFound()
 
@@ -80,7 +81,7 @@ export async function TaxonomyDetail({
   const spots = (await sanityFetch({
     query: taxonomyReverseSpotsQuery,
     params: { ids: bothIdForms(doc._id) },
-    tags: ['spot', `${segment}:${slug}`],
+    tags: ['spot', ...types.map((type) => `${type}:${slug}`)],
   })) as SpotCardData[]
 
   const title = doc.name ?? doc.id ?? doc._id

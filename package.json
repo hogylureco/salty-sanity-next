@@ -7,12 +7,14 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "typegen": "sanity schema extract && sanity typegen generate"
+    "typegen": "sanity schema extract && sanity typegen generate",
+    "simulate-webhook": "tsx scripts/simulate-webhook.ts"
   },
   "dependencies": {
     "@portabletext/react": "^6.2.0",
     "@sanity/image-url": "^2.1.1",
     "@sanity/vision": "^6.4.0",
+    "@sanity/webhook": "^4.0.4",
     "leaflet": "^1.9.4",
     "next": "16.2.10",
     "next-sanity": "^13.1.1",
@@ -31,6 +33,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.10",
     "tailwindcss": "^4",
+    "tsx": "^4.23.1",
     "typescript": "^5"
   }
 }

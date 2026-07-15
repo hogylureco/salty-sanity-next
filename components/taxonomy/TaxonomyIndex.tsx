@@ -29,7 +29,9 @@ export async function TaxonomyIndex({
   const docs = (await sanityFetch({
     query: taxonomyIndexQuery,
     params: { types },
-    tags: types,
+    // Index/card queries use the broad 'spot' tag — the revalidate handler emits
+    // it for every spot AND taxonomy publish, so new/removed docs show up here.
+    tags: ['spot'],
   })) as TaxonomyListItem[]
 
   return (

@@ -26,11 +26,19 @@ type SlugRow = { slug: string | null; _updatedAt: string }
 type TaxonomyRow = SlugRow & { _type: string }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  // Tagged 'spot' so the revalidate handler (which emits 'spot' on every spot
+  // AND taxonomy publish) refreshes the sitemap without a redeploy.
   const [spots, taxonomy] = await Promise.all([
-    publishedClient.fetch(sitemapSpotsQuery) as Promise<SlugRow[]>,
-    publishedClient.fetch(sitemapTaxonomyQuery, {
-      types: ALL_TAXONOMY_TYPES,
-    }) as Promise<TaxonomyRow[]>,
+    publishedClient.fetch(
+      sitemapSpotsQuery,
+      {},
+      { next: { tags: ['spot'] } },
+    ) as Promise<SlugRow[]>,
+    publishedClient.fetch(
+      sitemapTaxonomyQuery,
+      { types: ALL_TAXONOMY_TYPES },
+      { next: { tags: ['spot'] } },
+    ) as Promise<TaxonomyRow[]>,
   ])
 
   const now = new Date()

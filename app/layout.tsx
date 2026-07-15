@@ -26,6 +26,10 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      // Browser extensions (e.g. Scribe) inject attributes like
+      // `data-scribe-recorder-ready` onto <html> before hydration; ignore those
+      // attribute mismatches on the root element only.
+      suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col">{children}</body>
     </html>

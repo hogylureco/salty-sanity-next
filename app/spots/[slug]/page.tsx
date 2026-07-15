@@ -130,6 +130,7 @@ function scalar(value: unknown): string {
 export async function generateStaticParams() {
   const slugs = (await sanityFetch({
     query: allSpotSlugsQuery,
+    tags: ['spot'],
   })) as AllSpotSlugsQueryResult
   return slugs
     .filter((s): s is { slug: string; id: string | null } => Boolean(s.slug))
