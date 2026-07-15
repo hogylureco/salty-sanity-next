@@ -1,26 +1,73 @@
 @import "tailwindcss";
 
+/*
+ * Salty Cape brand tokens. These CSS variables are the canonical vocabulary
+ * shared with the embeddable widget system and Builder pages — names match the
+ * brand guidelines. (`sc-ux-guidelines-simple.md` is not in this repo; the
+ * names below follow the semantic vocabulary specified in the Phase 8 brief.)
+ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg-box: #ffffff;
+  --bg-body: #f9f9f9;
+  --text-body: #333333;
+  --text-header: #535c71;
+  --green-dark: #0a7c5f;
+  --green-light: #64ffda;
+  --red-dark: #cc4444;
+  --red-light: #ff6b6b;
+
+  /* Step-down box padding on small screens; one token, not per-component. */
+  --box-padding: 1rem;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
+@media (min-width: 640px) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --box-padding: 25px;
   }
 }
 
+/*
+ * Tailwind theme mapping. NOTE: Tailwind derives bg-/text-/border- utilities
+ * from ONE token name, so `bg-body`(#f9f9f9) and `text-body`(#333) can't share
+ * the name `body`. The CSS vars above keep the guideline names verbatim; the
+ * Tailwind color tokens are named by role to avoid a misleading `text-body`.
+ *   bg-body     → page background (#f9f9f9)
+ *   bg-box      → card fill (#fff)
+ *   text-ink    → body text (#333)          [use instead of text-body]
+ *   text-header → headers (#535c71)
+ *   *-green-dark / *-green-light / *-red-dark / *-red-light → accents
+ */
+@theme {
+  --color-body: var(--bg-body);
+  --color-box: var(--bg-box);
+  --color-ink: var(--text-body);
+  --color-header: var(--text-header);
+  --color-green-dark: var(--green-dark);
+  --color-green-light: var(--green-light);
+  --color-red-dark: var(--red-dark);
+  --color-red-light: var(--red-light);
+
+  --font-mono: var(--font-primary); /* Inconsolata */
+  --font-sans: var(--font-secondary); /* IBM Plex Sans */
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg-body);
+  color: var(--text-body);
+  font-family: var(--font-secondary), system-ui, sans-serif;
+}
+
+@layer components {
+  /*
+   * The one Box treatment. Every card/section uses this — no ad-hoc cards.
+   * Spec: #fff fill, 25px padding (steps to 1rem on mobile), 5px radius,
+   * 1px solid #f9f9f9 border, subtle shadow.
+   */
+  .box {
+    background: var(--bg-box);
+    padding: var(--box-padding);
+    border-radius: 5px;
+    border: 1px solid var(--bg-body);
+    box-shadow: 0 2px 4px rgb(0 0 0 / 0.06);
+  }
 }

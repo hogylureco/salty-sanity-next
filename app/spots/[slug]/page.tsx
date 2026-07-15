@@ -53,8 +53,11 @@ function NarrativeSection({
 }) {
   if (!value || value.length === 0) return null
   return (
-    <section>
-      <h2>{title}</h2>
+    <section className="mt-8 first:mt-0">
+      {/* Eyebrow label (the field name): Inconsolata, uppercase, small, #535c71. */}
+      <h2 className="mb-3 font-mono text-xs font-semibold uppercase tracking-wider text-header">
+        {title}
+      </h2>
       <SpotPortableText value={value} />
     </section>
   )
@@ -98,19 +101,30 @@ function ReferenceSection({
   items: Array<SpotRef | null> | null
 }) {
   const resolved = (items ?? []).filter((it): it is SpotRef => it != null)
+  const chipBase =
+    'inline-block rounded-[5px] bg-body px-2 py-1 font-mono text-xs'
   return (
-    <section>
-      <h2>{label}</h2>
+    <section className="mb-4">
+      <h3 className="mb-2 font-mono text-xs font-semibold uppercase tracking-wider text-header">
+        {label}
+      </h3>
       {resolved.length === 0 ? (
-        <p>— none —</p>
+        <p className="text-sm text-header">— none —</p>
       ) : (
-        <ul>
+        <ul className="flex flex-wrap gap-2">
           {resolved.map((it) => (
             <li key={it._id}>
               {it.slug ? (
-                <Link href={`${base}/${it.slug}`}>{it.name ?? it._id}</Link>
+                <Link
+                  href={`${base}/${it.slug}`}
+                  className={`${chipBase} ring-1 ring-transparent hover:ring-green-light`}
+                >
+                  {it.name ?? it._id}
+                </Link>
               ) : (
-                <span>{it.name ?? it._id} (no slug)</span>
+                <span className={`${chipBase} text-header`}>
+                  {it.name ?? it._id} (no slug)
+                </span>
               )}
             </li>
           ))}
@@ -225,79 +239,131 @@ export default async function SpotPage({
     { label: 'subSpotsFXApproaches', base: '/spots', items: spot.subSpotsFXApproaches },
   ]
 
+  const region = regionForSpot(
+    spot.id,
+    spot.region?.[0]?.name,
+    spot.region?.[0]?.slug,
+  )
+
   return (
-    <main>
-      <h1>{spot.name ?? spot.id ?? spot._id}</h1>
+    <main className="mx-auto w-full max-w-4xl space-y-6 px-4 py-8">
+      <header className="space-y-1">
+        {/* Breadcrumb/region line: Inconsolata, uppercase. */}
+        <p className="font-mono text-xs uppercase tracking-wider text-header">
+          <Link href="/spots" className="hover:text-green-dark">
+            Spots
+          </Link>
+          {' / '}
+          {region.slug ? (
+            <Link
+              href={`/regions/${region.slug}`}
+              className="hover:text-green-dark"
+            >
+              {region.name}
+            </Link>
+          ) : (
+            region.name
+          )}
+        </p>
+        {/* H1 hero in Inconsolata 700; the id beneath as an intentional signature. */}
+        <h1 className="font-mono text-3xl font-bold leading-tight text-header sm:text-4xl">
+          {spot.name ?? spot.id ?? spot._id}
+        </h1>
+        {spot.id && <p className="font-mono text-sm text-header">{spot.id}</p>}
+      </header>
 
-      {/* Client-only interactive layer (map + Worker data). Both fetch after
-          hydration, so the page stays statically generated. */}
-      <SpotMapLoader
-        lat={spot.latitude}
-        lng={spot.longitude}
-        name={spot.name ?? spot.id ?? spot._id}
-        zoom={spot.zoomLevel ?? undefined}
-      />
-      <SpotConditions
-        spotId={spot._id}
-        tideStationId={spot.tideStationId}
-        currentStationId={spot.currentStationId}
-      />
+      {/* Map bleeds to the Box edge (padding 0, clipped to the 5px radius). */}
+      <div className="box overflow-hidden p-0">
+        <SpotMapLoader
+          lat={spot.latitude}
+          lng={spot.longitude}
+          name={spot.name ?? spot.id ?? spot._id}
+          zoom={spot.zoomLevel ?? undefined}
+        />
+      </div>
 
-      <section>
-        <h2>Fields</h2>
-        <dl>
+      <div className="box">
+        <SpotConditions
+          spotId={spot._id}
+          tideStationId={spot.tideStationId}
+          currentStationId={spot.currentStationId}
+        />
+      </div>
+
+      <section className="box">
+        <h2 className="mb-3 font-mono text-xs font-semibold uppercase tracking-wider text-header">
+          Fields
+        </h2>
+        <dl className="divide-y divide-body">
           {scalars.map(({ label, node }) => (
-            <div key={label}>
-              <dt>{label}</dt>
-              <dd>{node}</dd>
+            <div key={label} className="flex flex-wrap gap-x-3 py-1">
+              <dt className="min-w-[11rem] font-mono text-xs uppercase tracking-wide text-header">
+                {label}
+              </dt>
+              <dd className="text-sm">{node}</dd>
             </div>
           ))}
         </dl>
       </section>
 
-      <section>
-        <h2>featuredImage</h2>
+      <section className="box">
+        <h2 className="mb-3 font-mono text-xs font-semibold uppercase tracking-wider text-header">
+          featuredImage
+        </h2>
         {spot.featuredImage?.url ? (
-          // Plain <img> for now; next/image tuning is a Phase 8 styling concern.
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={spot.featuredImage.url}
             alt={spot.featuredImage.alt ?? ''}
+            className="max-w-full rounded-[5px]"
           />
         ) : (
-          <p>— none —</p>
+          <p className="text-sm text-header">— none —</p>
         )}
-        <dl>
-          <div>
-            <dt>alt</dt>
-            <dd>{scalar(spot.featuredImage?.alt)}</dd>
+        <dl className="mt-2 divide-y divide-body">
+          <div className="flex flex-wrap gap-x-3 py-1">
+            <dt className="min-w-[11rem] font-mono text-xs uppercase tracking-wide text-header">
+              alt
+            </dt>
+            <dd className="text-sm">{scalar(spot.featuredImage?.alt)}</dd>
           </div>
-          <div>
-            <dt>caption</dt>
-            <dd>{scalar(spot.featuredImage?.caption)}</dd>
+          <div className="flex flex-wrap gap-x-3 py-1">
+            <dt className="min-w-[11rem] font-mono text-xs uppercase tracking-wide text-header">
+              caption
+            </dt>
+            <dd className="text-sm">{scalar(spot.featuredImage?.caption)}</dd>
           </div>
         </dl>
       </section>
 
-      {/* Narrative Portable Text sections (spotCard + the 7 named narratives). */}
-      <NarrativeSection title="spotCard" value={spot.spotCard} />
-      <NarrativeSection title="captMikeNotes" value={spot.captMikeNotes} />
-      <NarrativeSection title="historicalAnalysis" value={spot.historicalAnalysis} />
-      <NarrativeSection title="environmentalFactors" value={spot.environmentalFactors} />
-      <NarrativeSection title="observationalFactors" value={spot.observationalFactors} />
-      <NarrativeSection title="structureApproach" value={spot.structureApproach} />
-      <NarrativeSection title="gearTechnique" value={spot.gearTechnique} />
-      <NarrativeSection title="QAcaptMike" value={spot.QAcaptMike} />
+      {/* All 7 narratives + spotCard in ONE Box with internal rhythm — 7 stacked
+          box shadows read as visual noise at 25px padding, so: one Box, section
+          spacing between fields. (Box-per-section decision, per the brief.) */}
+      <div className="box">
+        <NarrativeSection title="spotCard" value={spot.spotCard} />
+        <NarrativeSection title="captMikeNotes" value={spot.captMikeNotes} />
+        <NarrativeSection title="historicalAnalysis" value={spot.historicalAnalysis} />
+        <NarrativeSection title="environmentalFactors" value={spot.environmentalFactors} />
+        <NarrativeSection title="observationalFactors" value={spot.observationalFactors} />
+        <NarrativeSection title="structureApproach" value={spot.structureApproach} />
+        <NarrativeSection title="gearTechnique" value={spot.gearTechnique} />
+        <NarrativeSection title="QAcaptMike" value={spot.QAcaptMike} />
+      </div>
 
-      {/* Reference fields — every field always shown (— none — when empty). */}
-      {references.map((ref) => (
-        <ReferenceSection
-          key={ref.label}
-          label={ref.label}
-          base={ref.base}
-          items={ref.items}
-        />
-      ))}
+      {/* Reference chips, grouped near the end. */}
+      <div className="box">
+        <h2 className="mb-4 font-mono text-sm font-semibold uppercase tracking-wider text-header">
+          Related
+        </h2>
+        {references.map((ref) => (
+          <ReferenceSection
+            key={ref.label}
+            label={ref.label}
+            base={ref.base}
+            items={ref.items}
+          />
+        ))}
+      </div>
 
       {/* Client island: renders the ?debug=1 JSON dump without opting the page
           out of static rendering. Suspense keeps prerendering static. */}

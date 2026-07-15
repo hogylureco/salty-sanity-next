@@ -86,24 +86,43 @@ export async function TaxonomyDetail({
 
   const title = doc.name ?? doc.id ?? doc._id
   return (
-    <main>
-      <nav aria-label="Breadcrumb">
-        <Link href="/">Home</Link> {'›'} <Link href={`/${segment}`}>{label}</Link>{' '}
-        {'›'} {title}
-      </nav>
-      <h1>{title}</h1>
-      {doc.id && (
-        <p>
-          <code>{doc.id}</code>
-        </p>
+    <main className="mx-auto w-full max-w-4xl space-y-6 px-4 py-8">
+      <header className="space-y-1">
+        <nav
+          aria-label="Breadcrumb"
+          className="font-mono text-xs uppercase tracking-wider text-header"
+        >
+          <Link href="/" className="hover:text-green-dark">
+            Home
+          </Link>{' '}
+          {'›'}{' '}
+          <Link href={`/${segment}`} className="hover:text-green-dark">
+            {label}
+          </Link>{' '}
+          {'›'} {title}
+        </nav>
+        <h1 className="font-mono text-3xl font-bold leading-tight text-header sm:text-4xl">
+          {title}
+        </h1>
+        {doc.id && <p className="font-mono text-sm text-header">{doc.id}</p>}
+      </header>
+      {doc.description && (
+        <div className="box">
+          <SpotPortableText value={doc.description} />
+        </div>
       )}
-      {doc.description && <SpotPortableText value={doc.description} />}
-      <section>
-        <h2>Spots ({spots.length})</h2>
+      <section className="space-y-4">
+        <h2 className="font-sans text-2xl font-semibold text-header">
+          Spots ({spots.length})
+        </h2>
         {spots.length === 0 ? (
-          <p>— none —</p>
+          <p className="text-sm text-header">— none —</p>
         ) : (
-          spots.map((spot) => <SpotCard key={spot._id} spot={spot} />)
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {spots.map((spot) => (
+              <SpotCard key={spot._id} spot={spot} />
+            ))}
+          </div>
         )}
       </section>
       <JsonLd

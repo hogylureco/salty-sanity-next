@@ -120,11 +120,14 @@ export function SpotConditions({
     return () => controller.abort()
   }, [spotId, tideStationId, currentStationId])
 
+  const eyebrow =
+    'mb-3 font-mono text-xs font-semibold uppercase tracking-wider text-header'
+
   if (state.status === 'loading') {
     return (
       <section aria-busy="true">
-        <h2>Conditions</h2>
-        <p>Loading tide &amp; current data…</p>
+        <h2 className={eyebrow}>Conditions</h2>
+        <p className="text-sm text-header">Loading tide &amp; current data…</p>
       </section>
     )
   }
@@ -132,8 +135,8 @@ export function SpotConditions({
   if (state.status === 'error') {
     return (
       <section>
-        <h2>Conditions</h2>
-        <p>Conditions unavailable.</p>
+        <h2 className={eyebrow}>Conditions</h2>
+        <p className="text-sm text-header">Conditions unavailable.</p>
       </section>
     )
   }
@@ -142,52 +145,59 @@ export function SpotConditions({
   const nextTides = tides ? upcoming(tides, (t) => t.t) : []
   const nextCurrents = currents ? upcoming(currents, (c) => c.Time) : []
 
+  const th = 'bg-header px-2 py-1.5 text-left font-mono text-xs font-semibold text-white'
+  const td = 'border-t border-body px-2 py-1.5'
+  const timeCell = `${td} whitespace-nowrap font-mono font-semibold text-green-dark`
+  const subhead = 'mt-4 mb-2 font-sans text-base font-semibold text-header'
+
   return (
     <section>
-      <h2>Conditions</h2>
+      <h2 className={eyebrow}>Conditions</h2>
 
-      <h3>Next tides</h3>
+      <h3 className={subhead}>Next tides</h3>
       {nextTides.length === 0 ? (
-        <p>Tide data unavailable.</p>
+        <p className="text-sm text-header">Tide data unavailable.</p>
       ) : (
-        <table>
+        <table className="w-full border-collapse text-sm">
           <thead>
             <tr>
-              <th scope="col">Time</th>
-              <th scope="col">Tide</th>
-              <th scope="col">Height (ft)</th>
+              <th scope="col" className={th}>Time</th>
+              <th scope="col" className={th}>Tide</th>
+              <th scope="col" className={th}>Height (ft)</th>
             </tr>
           </thead>
           <tbody>
             {nextTides.map((tide) => (
-              <tr key={`${tide.t}-${tide.type}`}>
-                <td>{formatEastern(tide.t)}</td>
-                <td>{tide.type === 'H' ? 'High' : 'Low'}</td>
-                <td>{tide.v}</td>
+              <tr key={`${tide.t}-${tide.type}`} className="odd:bg-box even:bg-body">
+                <td className={timeCell}>{formatEastern(tide.t)}</td>
+                <td className={`${td} font-sans`}>
+                  {tide.type === 'H' ? 'High' : 'Low'}
+                </td>
+                <td className={`${td} font-mono`}>{tide.v}</td>
               </tr>
             ))}
           </tbody>
         </table>
       )}
 
-      <h3>Next current</h3>
+      <h3 className={subhead}>Next current</h3>
       {nextCurrents.length === 0 ? (
-        <p>Current data unavailable.</p>
+        <p className="text-sm text-header">Current data unavailable.</p>
       ) : (
-        <table>
+        <table className="w-full border-collapse text-sm">
           <thead>
             <tr>
-              <th scope="col">Time</th>
-              <th scope="col">Stage</th>
-              <th scope="col">Velocity (kts)</th>
+              <th scope="col" className={th}>Time</th>
+              <th scope="col" className={th}>Stage</th>
+              <th scope="col" className={th}>Velocity (kts)</th>
             </tr>
           </thead>
           <tbody>
             {nextCurrents.map((current) => (
-              <tr key={`${current.Time}-${current.Type}`}>
-                <td>{formatEastern(current.Time)}</td>
-                <td>{current.Type}</td>
-                <td>{current.Velocity_Major}</td>
+              <tr key={`${current.Time}-${current.Type}`} className="odd:bg-box even:bg-body">
+                <td className={timeCell}>{formatEastern(current.Time)}</td>
+                <td className={`${td} font-sans`}>{current.Type}</td>
+                <td className={`${td} font-mono`}>{current.Velocity_Major}</td>
               </tr>
             ))}
           </tbody>

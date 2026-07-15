@@ -28,37 +28,87 @@ function isInternalHref(href: string): boolean {
  */
 export const spotPortableTextComponents: PortableTextComponents = {
   block: {
-    normal: ({ children }) => <p>{children}</p>,
-    // `h1` isn't in the Phase 1 spec (h2–h4) but appears in real content; handle
-    // it explicitly rather than leaning on the library default. Whether narrative
-    // h1s should be down-shifted (the page already owns the <h1>) is a Phase 8 call.
-    h1: ({ children }) => <h1>{children}</h1>,
-    h2: ({ children }) => <h2>{children}</h2>,
-    h3: ({ children }) => <h3>{children}</h3>,
-    h4: ({ children }) => <h4>{children}</h4>,
-    blockquote: ({ children }) => <blockquote>{children}</blockquote>,
+    // Body prose: IBM Plex Sans (default), #333, ~68ch measure, line-height ~1.65.
+    normal: ({ children }) => (
+      <p className="my-4 max-w-[68ch] leading-[1.65]">{children}</p>
+    ),
+    // Narrative h1 down-shifted visually (the page owns the real <h1>): render as
+    // an h2-scale heading. IBM Plex Sans 600, #535c71.
+    h1: ({ children }) => (
+      <h2 className="mt-10 mb-3 max-w-[68ch] font-sans text-2xl font-semibold text-header">
+        {children}
+      </h2>
+    ),
+    h2: ({ children }) => (
+      <h2 className="mt-10 mb-3 max-w-[68ch] font-sans text-2xl font-semibold text-header">
+        {children}
+      </h2>
+    ),
+    h3: ({ children }) => (
+      <h3 className="mt-8 mb-2 max-w-[68ch] font-sans text-xl font-semibold text-header">
+        {children}
+      </h3>
+    ),
+    h4: ({ children }) => (
+      <h4 className="mt-6 mb-2 max-w-[68ch] font-sans text-lg font-semibold text-header">
+        {children}
+      </h4>
+    ),
+    blockquote: ({ children }) => (
+      <blockquote className="my-5 max-w-[68ch] border-l-4 border-green-light pl-4 italic text-header">
+        {children}
+      </blockquote>
+    ),
   },
   list: {
-    bullet: ({ children }) => <ul>{children}</ul>,
-    number: ({ children }) => <ol>{children}</ol>,
+    bullet: ({ children }) => (
+      <ul className="my-4 max-w-[68ch] list-disc space-y-1 pl-6 leading-[1.6]">
+        {children}
+      </ul>
+    ),
+    number: ({ children }) => (
+      <ol className="my-4 max-w-[68ch] list-decimal space-y-1 pl-6 leading-[1.6]">
+        {children}
+      </ol>
+    ),
   },
   listItem: {
     bullet: ({ children }) => <li>{children}</li>,
     number: ({ children }) => <li>{children}</li>,
   },
   marks: {
-    strong: ({ children }) => <strong>{children}</strong>,
+    strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
     em: ({ children }) => <em>{children}</em>,
-    code: ({ children }) => <code>{children}</code>,
-    // Present in the plugin's default cell content schema; render defensively.
+    // Inline code: Inconsolata on #f9f9f9, subtle radius.
+    code: ({ children }) => (
+      <code className="rounded bg-body px-1 py-0.5 font-mono text-[0.9em]">
+        {children}
+      </code>
+    ),
     underline: ({ children }) => <u>{children}</u>,
     'strike-through': ({ children }) => <s>{children}</s>,
+    // Links: #c44 underlined, hover shifts toward #ff6b6b (site-wide treatment).
     link: ({ children, value }) => {
       const href = (value as { href?: string } | undefined)?.href ?? ''
       if (!href) return <>{children}</>
-      if (isInternalHref(href)) return <Link href={href}>{children}</Link>
+      // #c44 underlined at rest; hover gains a #64ffda underline accent (keeping
+      // the text at #c44 — #ff6b6b as text fails AA contrast on white).
+      const className =
+        'text-red-dark underline underline-offset-2 hover:decoration-green-light hover:decoration-2'
+      if (isInternalHref(href)) {
+        return (
+          <Link href={href} className={className}>
+            {children}
+          </Link>
+        )
+      }
       return (
-        <a href={href} target="_blank" rel="noopener noreferrer">
+        <a
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={className}
+        >
           {children}
         </a>
       )
