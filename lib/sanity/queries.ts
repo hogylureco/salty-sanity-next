@@ -205,3 +205,23 @@ export const sitemapSpotsQuery = defineQuery(/* groq */ `
 export const sitemapTaxonomyQuery = defineQuery(/* groq */ `
   *[_type in $types && defined(slug.current)]{ _type, "slug": slug.current, _updatedAt }
 `)
+
+/**
+ * Card queries for the Builder.io marketing components. Fetched client-side from
+ * the public (published) perspective. Same card shape as the /spots index.
+ */
+export const spotCardBySlugQuery = defineQuery(/* groq */ `
+  *[_type == "spot" && slug.current == $slug][0]{
+    ${spotCardProjection}
+  }
+`)
+
+// Draft ids use dot separators ("BB.WE.fs…"); published ids are sanitized to
+// underscores ("BB_WE_fs…"). Match both so the region grid works in either.
+export const spotCardsByRegionQuery = defineQuery(/* groq */ `
+  *[_type == "spot" && defined(slug.current) && (
+    string::startsWith(id, $code + ".") || string::startsWith(id, $code + "_")
+  )]{
+    ${spotCardProjection}
+  } | order(name)
+`)

@@ -1710,6 +1710,28 @@ export type SitemapTaxonomyQueryResult = Array<
     }
 >;
 
+// Source: lib/sanity/queries.ts
+// Variable: spotCardBySlugQuery
+// Query: *[_type == "spot" && slug.current == $slug][0]{      _id,  name,  id,  "slug": slug.current,  "summary": pt::text(coalesce(spotCard, captMikeNotes))  }
+export type SpotCardBySlugQueryResult = {
+  _id: string;
+  name: string | null;
+  id: string | null;
+  slug: string | null;
+  summary: string;
+} | null;
+
+// Source: lib/sanity/queries.ts
+// Variable: spotCardsByRegionQuery
+// Query: *[_type == "spot" && defined(slug.current) && (    string::startsWith(id, $code + ".") || string::startsWith(id, $code + "_")  )]{      _id,  name,  id,  "slug": slug.current,  "summary": pt::text(coalesce(spotCard, captMikeNotes))  } | order(name)
+export type SpotCardsByRegionQueryResult = Array<{
+  _id: string;
+  name: string | null;
+  id: string | null;
+  slug: string | null;
+  summary: string;
+}>;
+
 // Query TypeMap
 import "@sanity/client";
 declare module "@sanity/client" {
@@ -1724,5 +1746,7 @@ declare module "@sanity/client" {
     '\n  *[_type == "spot" && references($ids)]{\n    \n  _id,\n  name,\n  id,\n  "slug": slug.current,\n  "summary": pt::text(coalesce(spotCard, captMikeNotes))\n\n  } | order(name)\n': TaxonomyReverseSpotsQueryResult;
     '\n  *[_type == "spot" && defined(slug.current)]{ "slug": slug.current, _updatedAt }\n': SitemapSpotsQueryResult;
     '\n  *[_type in $types && defined(slug.current)]{ _type, "slug": slug.current, _updatedAt }\n': SitemapTaxonomyQueryResult;
+    '\n  *[_type == "spot" && slug.current == $slug][0]{\n    \n  _id,\n  name,\n  id,\n  "slug": slug.current,\n  "summary": pt::text(coalesce(spotCard, captMikeNotes))\n\n  }\n': SpotCardBySlugQueryResult;
+    '\n  *[_type == "spot" && defined(slug.current) && (\n    string::startsWith(id, $code + ".") || string::startsWith(id, $code + "_")\n  )]{\n    \n  _id,\n  name,\n  id,\n  "slug": slug.current,\n  "summary": pt::text(coalesce(spotCard, captMikeNotes))\n\n  } | order(name)\n': SpotCardsByRegionQueryResult;
   }
 }

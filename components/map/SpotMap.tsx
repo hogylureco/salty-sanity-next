@@ -4,9 +4,6 @@ import { useEffect, useRef } from 'react'
 
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
-import markerIconUrl from 'leaflet/dist/images/marker-icon.png'
-import markerIcon2xUrl from 'leaflet/dist/images/marker-icon-2x.png'
-import markerShadowUrl from 'leaflet/dist/images/marker-shadow.png'
 
 import { MAP_HEIGHT, type SpotMapProps } from './mapConstants'
 
@@ -21,18 +18,16 @@ const TILE_LAYER = {
 }
 
 /**
- * Explicit icon, built from bundled PNG URLs. Passing it per-marker bypasses
- * Leaflet's default icon, whose relative URLs break under bundlers (the classic
- * broken-image marker).
+ * A pure-CSS teardrop pin via `L.divIcon` — no image URLs, so it sidesteps
+ * Leaflet's bundler-broken default icon AND the flaky node_modules PNG imports
+ * under Turbopack (which resolved to no usable `.src`). Styling is Phase 8.
  */
-const spotIcon = L.icon({
-  iconUrl: markerIconUrl.src,
-  iconRetinaUrl: markerIcon2xUrl.src,
-  shadowUrl: markerShadowUrl.src,
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41],
+const spotIcon = L.divIcon({
+  className: 'spot-map-marker',
+  html: '<span style="display:block;width:16px;height:16px;background:#2b6cb0;border:2px solid #fff;border-radius:50% 50% 50% 0;transform:rotate(-45deg);box-shadow:0 0 3px rgba(0,0,0,.5)"></span>',
+  iconSize: [16, 16],
+  iconAnchor: [8, 16],
+  popupAnchor: [0, -16],
 })
 
 /** Coerce a coordinate to a finite number; treat anything else as missing. */
