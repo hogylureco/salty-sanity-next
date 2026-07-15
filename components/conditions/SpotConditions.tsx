@@ -1,0 +1,198 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+
+import {
+  type CurrentEvent,
+  type TideEvent,
+  fetchWorkerJson,
+  formatEastern,
+  parseNoaaStationId,
+} from '@/lib/worker'
+
+export interface SpotConditionsProps {
+  spotId: string
+  tideStationId: string | null
+  currentStationId: string | null
+}
+
+interface ConditionsData {
+  tides: TideEvent[] | null
+  currents: CurrentEvent[] | null
+}
+
+// Module-level 5-minute cache keyed by spot id, so back/forward navigation
+// reuses data instead of re-hitting the Worker.
+const CACHE_TTL = 5 * 60 * 1000
+const cache = new Map<string, { at: number; data: ConditionsData }>()
+
+type State =
+  | { status: 'loading' }
+  | { status: 'error' }
+  | { status: 'success'; data: ConditionsData }
+
+/** "YYYY-MM-DD HH:mm" for now in America/New_York, for chronological string compare. */
+function nowEastern(): string {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/New_York',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).formatToParts(new Date())
+  const p: Record<string, string> = {}
+  for (const part of parts) p[part.type] = part.value
+  const hour = p.hour === '24' ? '00' : p.hour
+  return `${p.year}-${p.month}-${p.day} ${hour}:${p.minute}`
+}
+
+/** Next `count` events at/after now (Eastern); falls back to the last few. */
+function upcoming<T>(events: T[], time: (e: T) => string, count = 4): T[] {
+  const now = nowEastern()
+  const future = events.filter((e) => time(e) >= now)
+  return (future.length > 0 ? future : events.slice(-count)).slice(0, count)
+}
+
+export function SpotConditions({
+  spotId,
+  tideStationId,
+  currentStationId,
+}: SpotConditionsProps) {
+  // Always start 'loading' for a deterministic SSR/first-client render (no
+  // hydration mismatch); the effect fills from cache or network after mount.
+  const [state, setState] = useState<State>({ status: 'loading' })
+
+  useEffect(() => {
+    const cached = cache.get(spotId)
+    if (cached && Date.now() - cached.at < CACHE_TTL) {
+      setState({ status: 'success', data: cached.data })
+      return
+    }
+
+    const controller = new AbortController()
+    const tideId = parseNoaaStationId(tideStationId)
+    const currentId = currentStationId?.trim() || null
+
+    async function load() {
+      const [tidesResult, currentsResult] = await Promise.allSettled([
+        tideId
+          ? fetchWorkerJson<TideEvent[]>(
+              `/tides?station=${encodeURIComponent(tideId)}&days=2`,
+              controller.signal,
+            )
+          : Promise.reject(new Error('no tide station')),
+        currentId
+          ? fetchWorkerJson<CurrentEvent[]>(
+              `/currents?station=${encodeURIComponent(currentId)}&days=2`,
+              controller.signal,
+            )
+          : Promise.reject(new Error('no current station')),
+      ])
+      if (controller.signal.aborted) return
+
+      const tides =
+        tidesResult.status === 'fulfilled' && Array.isArray(tidesResult.value)
+          ? tidesResult.value
+          : null
+      const currents =
+        currentsResult.status === 'fulfilled' &&
+        Array.isArray(currentsResult.value)
+          ? currentsResult.value
+          : null
+
+      if (tides === null && currents === null) {
+        setState({ status: 'error' })
+        return
+      }
+      const data: ConditionsData = { tides, currents }
+      cache.set(spotId, { at: Date.now(), data })
+      setState({ status: 'success', data })
+    }
+
+    // Belt-and-suspenders: a Worker outage / CORS block must never throw out of
+    // this component into an error boundary.
+    load().catch(() => {
+      if (!controller.signal.aborted) setState({ status: 'error' })
+    })
+
+    return () => controller.abort()
+  }, [spotId, tideStationId, currentStationId])
+
+  if (state.status === 'loading') {
+    return (
+      <section aria-busy="true">
+        <h2>Conditions</h2>
+        <p>Loading tide &amp; current data…</p>
+      </section>
+    )
+  }
+
+  if (state.status === 'error') {
+    return (
+      <section>
+        <h2>Conditions</h2>
+        <p>Conditions unavailable.</p>
+      </section>
+    )
+  }
+
+  const { tides, currents } = state.data
+  const nextTides = tides ? upcoming(tides, (t) => t.t) : []
+  const nextCurrents = currents ? upcoming(currents, (c) => c.Time) : []
+
+  return (
+    <section>
+      <h2>Conditions</h2>
+
+      <h3>Next tides</h3>
+      {nextTides.length === 0 ? (
+        <p>Tide data unavailable.</p>
+      ) : (
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Time</th>
+              <th scope="col">Tide</th>
+              <th scope="col">Height (ft)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {nextTides.map((tide) => (
+              <tr key={`${tide.t}-${tide.type}`}>
+                <td>{formatEastern(tide.t)}</td>
+                <td>{tide.type === 'H' ? 'High' : 'Low'}</td>
+                <td>{tide.v}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+
+      <h3>Next current</h3>
+      {nextCurrents.length === 0 ? (
+        <p>Current data unavailable.</p>
+      ) : (
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Time</th>
+              <th scope="col">Stage</th>
+              <th scope="col">Velocity (kts)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {nextCurrents.map((current) => (
+              <tr key={`${current.Time}-${current.Type}`}>
+                <td>{formatEastern(current.Time)}</td>
+                <td>{current.Type}</td>
+                <td>{current.Velocity_Major}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </section>
+  )
+}

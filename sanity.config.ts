@@ -6,6 +6,7 @@
 
 import {visionTool} from '@sanity/vision'
 import {defineConfig} from 'sanity'
+import {richTablePlugin} from 'sanity-plugin-rich-table'
 import {structureTool} from 'sanity/structure'
 
 // Go to https://www.sanity.io/docs/api-versioning to learn how API versioning works
@@ -21,6 +22,10 @@ export default defineConfig({
   schema,
   plugins: [
     structureTool({structure}),
+    // Owns `richTable`, `richTableBlock`, `row`, `richTableCell`, `columnHeader` and `content`.
+    // `portableTextSchemaTypeName` is left unset on purpose: our `richText` allows
+    // `richTableBlock`, and pointing cells at it would nest a table inside a table cell.
+    richTablePlugin(),
     // Vision is for querying with GROQ from inside the Studio
     // https://www.sanity.io/docs/the-vision-plugin
     visionTool({defaultApiVersion: apiVersion}),
