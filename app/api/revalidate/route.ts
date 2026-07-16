@@ -53,6 +53,13 @@ export async function POST(req: NextRequest) {
   if (_type === 'spot') {
     if (slug) tags.push(`spot:${slug}`)
     tags.push('spot')
+  } else if (_type === 'video') {
+    // Videos have no route of their own, but they render as cards in spot
+    // pages' Videos tab (fetched under the 'video' tag). A video publish must
+    // refresh those cards — 'video' hits every spot that fetched related
+    // videos; 'spot' covers lists/sitemap that may surface video-derived data.
+    tags.push('video')
+    tags.push('spot')
   } else if (_type && TAXONOMY_TYPES.has(_type)) {
     if (slug) tags.push(`${_type}:${slug}`)
     // Spot pages render referenced taxonomy names, so a taxonomy change must

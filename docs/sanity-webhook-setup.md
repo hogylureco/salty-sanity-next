@@ -24,12 +24,13 @@ seconds, instead of waiting out the 3600s ISR window (which stays as a safety ne
 
 ### Filter (GROQ)
 
-Only the document types that have a route need to trigger revalidation. `mode`
-(no slug/route) and `video` (deferred) are intentionally excluded.
+Document types that have a route, plus `video` (which has no route of its own
+but renders as cards in each spot page's Videos tab), trigger revalidation.
+`mode` (no slug/route, not surfaced) stays excluded.
 
 ```groq
 _type in [
-  "spot",
+  "spot", "video",
   "targetSpecies", "structure", "structureType", "approach", "techniqueRetrieve",
   "lureCatalog", "lureGearCategory", "parentLure", "baitfish", "microSeason",
   "region", "season", "zone"
@@ -76,7 +77,8 @@ openssl rand -base64 32
 | `_type` | Tags revalidated |
 |---|---|
 | `spot` | `spot:<slug>`, `spot` |
-| any taxonomy type (list above minus `spot`) | `<type>:<slug>`, `spot` |
+| `video` | `video`, `spot` |
+| any taxonomy type (list above minus `spot`/`video`) | `<type>:<slug>`, `spot` |
 | anything else | none — responds `200 {skipped:true}` |
 
 `spot` is deliberately broad: spot pages, index/card lists, and the sitemap all

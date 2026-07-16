@@ -8,13 +8,25 @@ import 'leaflet/dist/leaflet.css'
 import { MAP_HEIGHT, type SpotMapProps } from './mapConstants'
 
 /**
- * Base tile layer, isolated so the NOAA Chart Display WMS / OpenSeaMap overlays
- * (a later phase) are a one-line swap.
+ * Muted OSM underlay. Kept beneath the NOAA chart so land, town labels, and the
+ * coastline never render as blank tiles where the chart has no coverage.
  */
-const TILE_LAYER = {
+const BASE_LAYER = {
   url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-  attribution: '&copy; OpenStreetMap contributors',
+  attribution: '&copy; OpenStreetMap',
   maxZoom: 19,
+}
+
+/**
+ * NOAA Chart Display Service (WMS) — raster nautical charts, to match the chart
+ * look of the original Webflow spot page. Isolated as one constant so the exact
+ * endpoint/layers are a one-line swap. Attribution (NOAA Office of Coast Survey)
+ * is required and flows into Leaflet's attribution control.
+ */
+const NOAA_CHART_WMS = {
+  url: 'https://gis.charttools.noaa.gov/arcgis/services/MCS/NOAAChartDisplay/MapServer/WMSServer',
+  layers: '0,1,2,3,4,5,6,7',
+  attribution: 'Chart data &copy; NOAA Office of Coast Survey',
 }
 
 /**
@@ -46,10 +58,19 @@ export default function SpotMap({ lat, lng, name, zoom = 13 }: SpotMapProps) {
   useEffect(() => {
     if (latNum === null || lngNum === null || !containerRef.current) return
     const map = L.map(containerRef.current).setView([latNum, lngNum], zoom)
-    L.tileLayer(TILE_LAYER.url, {
-      attribution: TILE_LAYER.attribution,
-      maxZoom: TILE_LAYER.maxZoom,
+    L.tileLayer(BASE_LAYER.url, {
+      attribution: BASE_LAYER.attribution,
+      maxZoom: BASE_LAYER.maxZoom,
     }).addTo(map)
+    // NOAA nautical chart on top (transparent where the chart has no coverage).
+    L.tileLayer
+      .wms(NOAA_CHART_WMS.url, {
+        layers: NOAA_CHART_WMS.layers,
+        format: 'image/png',
+        transparent: true,
+        attribution: NOAA_CHART_WMS.attribution,
+      })
+      .addTo(map)
     L.marker([latNum, lngNum], { icon: spotIcon }).addTo(map).bindPopup(name)
     // Destroy on unmount — React StrictMode double-mounts in dev would otherwise
     // leak map instances / throw "Map container is already initialized".

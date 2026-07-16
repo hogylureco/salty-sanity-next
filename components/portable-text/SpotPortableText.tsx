@@ -2,7 +2,15 @@ import Link from 'next/link'
 
 import { PortableText, type PortableTextComponents } from '@portabletext/react'
 
+import { blockPlainText, slugifyHeading } from '@/lib/spot-sections'
+
 import { RichTable, type RichTableBlockValue } from './RichTable'
+
+/** Anchor id for a heading block, matching the TOC's slug (Step 1). */
+function headingId(value: unknown): string {
+  const text = blockPlainText(value)
+  return text ? slugifyHeading(text) : ''
+}
 
 /**
  * The exact `value` type `<PortableText>` accepts. Derived from the component
@@ -34,23 +42,37 @@ export const spotPortableTextComponents: PortableTextComponents = {
     ),
     // Narrative h1 down-shifted visually (the page owns the real <h1>): render as
     // an h2-scale heading. IBM Plex Sans 600, #535c71.
-    h1: ({ children }) => (
-      <h2 className="mt-10 mb-3 max-w-[68ch] font-sans text-2xl font-semibold text-header">
+    // Narrative h1 down-shifted visually (the page owns the real <h1>). `id` +
+    // scroll-margin let the sticky-tab-bar anchor links land cleanly.
+    h1: ({ children, value }) => (
+      <h2
+        id={headingId(value)}
+        className="mt-10 mb-3 max-w-[68ch] scroll-mt-28 font-sans text-2xl font-semibold text-header"
+      >
         {children}
       </h2>
     ),
-    h2: ({ children }) => (
-      <h2 className="mt-10 mb-3 max-w-[68ch] font-sans text-2xl font-semibold text-header">
+    h2: ({ children, value }) => (
+      <h2
+        id={headingId(value)}
+        className="mt-10 mb-3 max-w-[68ch] scroll-mt-28 font-sans text-2xl font-semibold text-header"
+      >
         {children}
       </h2>
     ),
-    h3: ({ children }) => (
-      <h3 className="mt-8 mb-2 max-w-[68ch] font-sans text-xl font-semibold text-header">
+    h3: ({ children, value }) => (
+      <h3
+        id={headingId(value)}
+        className="mt-8 mb-2 max-w-[68ch] scroll-mt-28 font-sans text-xl font-semibold text-header"
+      >
         {children}
       </h3>
     ),
-    h4: ({ children }) => (
-      <h4 className="mt-6 mb-2 max-w-[68ch] font-sans text-lg font-semibold text-header">
+    h4: ({ children, value }) => (
+      <h4
+        id={headingId(value)}
+        className="mt-6 mb-2 max-w-[68ch] scroll-mt-28 font-sans text-lg font-semibold text-header"
+      >
         {children}
       </h4>
     ),

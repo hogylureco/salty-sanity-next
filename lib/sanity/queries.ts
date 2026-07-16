@@ -12,6 +12,19 @@ const refProjection = /* groq */ `{
 }`
 
 /**
+ * Gear (`lureCatalog`) needs more than the identity trio to render as a card in
+ * the "Gear Used At This Spot" rail: the product image and outbound link. These
+ * fields live on the `lureCatalog` doc (`imageURL`, `websiteLink`).
+ */
+const gearProjection = /* groq */ `{
+  _id,
+  name,
+  "slug": slug.current,
+  imageURL,
+  websiteLink
+}`
+
+/**
  * Full detail projection for a single spot, keyed by slug.
  *
  * Notes baked into the projection:
@@ -82,12 +95,16 @@ export const spotBySlugQuery = defineQuery(/* groq */ `
     // --- relationships (weak refs; dangling targets resolve to null) ---
     approaches[]->${refProjection},
     baitfish[]->${refProjection},
-    lureCatalog[]->${refProjection},
+    lureCatalog[]->${gearProjection},
     lureGearCategory[]->${refProjection},
     microSeason[]->${refProjection},
     mode[]->${refProjection},
     parentLure[]->${refProjection},
     region[]->${refProjection},
+    // Raw refs (not deref'd) so the server can build the related-videos query
+    // params — most deref to null (dangling), but the _ref value is matchable.
+    "regionRef": region[0]._ref,
+    "targetSpeciesRefs": targetSpecies[]._ref,
     seasons[]->${refProjection},
     "structureTypes": coalesce(
       structureTypes[]->${refProjection},
@@ -98,9 +115,51 @@ export const spotBySlugQuery = defineQuery(/* groq */ `
     zone[]->${refProjection},
     relatedVideos[]->${refProjection},
     boatRamps[]->${refProjection},
-    nearbySpots[]->${refProjection},
+    nearbySpots[]->{
+      _id,
+      name,
+      id,
+      "slug": slug.current,
+      "summary": pt::text(coalesce(spotCard, captMikeNotes))
+    },
     subSpotsFXApproaches[]->${refProjection}
   }
+`)
+
+/**
+ * Related videos for a spot (approved ranking). ONE scored query, no client
+ * merge: tier 1 = a video that references this spot (`video.spot[]`, the real
+ * direct link — `spot.relatedVideos` is effectively unused), tier 2 = same
+ * region (matched on the raw `region._ref` string, since the deref dangles in
+ * drafts), tier 3 = shared target species. Ordered by tier then newest film
+ * date, capped at 6, auto-deduped (one row per video). Region name/slug are
+ * resolved with a manual-deref subquery so a dangling `region._ref` still
+ * yields a usable label + link.
+ *
+ * Params: $spotIds / $regionRefs / $speciesRefs — each passed in BOTH id forms
+ * (plain + `drafts.`-prefixed) by the caller (see lib/taxonomy `bothIdForms`).
+ */
+export const relatedVideosForSpotQuery = defineQuery(/* groq */ `
+  *[_type == "video" && (
+    references($spotIds) ||
+    region._ref in $regionRefs ||
+    count(targetspecies[@._ref in $speciesRefs]) > 0
+  )]{
+    _id,
+    "title": coalesce(name, youtubeTitle),
+    videoID,
+    watchURL,
+    videoFilmDate,
+    "region": *[_type == "region" && ("drafts." + _id == ^.region._ref || _id == ^.region._ref)][0]{
+      name,
+      "slug": slug.current
+    },
+    "tier": select(
+      references($spotIds) => 1,
+      region._ref in $regionRefs => 2,
+      true => 3
+    )
+  } | order(tier asc, videoFilmDate desc)[0...6]
 `)
 
 /**
