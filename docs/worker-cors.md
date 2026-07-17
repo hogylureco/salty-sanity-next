@@ -3,17 +3,26 @@
 The Salty Cape Next.js app fetches tide/current/conditions data **client-side**
 from the Cloudflare Worker at `https://salty-cape-api.hogylureco.workers.dev`.
 
-As of this writing the Worker responds with a single hardcoded origin:
+## Current live status (re-probed 2026-07-17) — PARTIALLY deployed
 
-```
-access-control-allow-origin: https://salty-cape.webflow.io
-```
+The reflection logic below is **already partly live**: the Worker now reads the
+`Origin` header and reflects it for a small allowlist. Measured today:
 
-So browser fetches from the Next app are **CORS-blocked** on every non-Webflow
-origin, and the `SpotConditions` component correctly falls back to its
-"Conditions unavailable" state. This doc is the change request for whoever owns
-the Worker repo. **No change is needed in this (Next.js) repo** — once the Worker
-is updated, `SpotConditions` shows live data automatically.
+| Origin | Live status |
+|---|---|
+| `https://salty-cape.webflow.io` | ✅ reflected |
+| `https://www.saltycape.com` | ✅ reflected |
+| `https://saltycape.com` (apex = `NEXT_PUBLIC_SITE_URL`) | ❌ **blocked** — falls back to webflow |
+| `http://localhost:3000` | ❌ **blocked** |
+| `https://<name>-<port>.app.github.dev` (Codespaces) | ❌ **blocked** — the `*.app.github.dev` regex is **not** deployed |
+| `https://*.vercel.app` (if Vercel previews are used) | ❌ blocked |
+
+**Remaining delta to apply on the Worker:** add the apex `saltycape.com`,
+`http://localhost:3000`, the `*.app.github.dev` pattern, and any Vercel host.
+Until then, the production apex domain, local dev, and Codespaces previews all
+render the module's fallback state despite the reflection logic being present.
+**No change is needed in this (Next.js) repo** — once the Worker allowlist is
+completed, the modules show live data automatically.
 
 ## The key constraint
 

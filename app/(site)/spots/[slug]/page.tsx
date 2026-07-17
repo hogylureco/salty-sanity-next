@@ -6,7 +6,6 @@ import { notFound } from 'next/navigation'
 
 import { JsonLd } from '@/components/JsonLd'
 import { SpotMapLoader } from '@/components/map/SpotMapLoader'
-import { DailyForecast } from '@/components/spot/dashboard/DailyForecast'
 import { PeakTidesToday } from '@/components/spot/dashboard/PeakTidesToday'
 import { GearRail, type GearItem } from '@/components/spot/rail/GearRail'
 import { MoreAboutSpot, type ChipGroup } from '@/components/spot/rail/MoreAboutSpot'
@@ -573,15 +572,10 @@ export default async function SpotPage({
         <div className="box">
           <PeakTidesToday
             spotId={spot._id}
-            slug={spot.slug ?? slug}
-            tideStationId={spot.tideStationId}
             currentStationId={spot.currentStationId}
           />
         </div>
-        <div className="box">
-          <DailyForecast />
-        </div>
-        <div className="box overflow-hidden p-0">
+        <div className="box overflow-hidden p-0 md:col-span-2">
           <SpotMapLoader
             lat={spot.latitude}
             lng={spot.longitude}

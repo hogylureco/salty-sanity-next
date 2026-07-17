@@ -84,7 +84,15 @@ export function SevenDayConditions({
 }: SevenDayConditionsProps) {
   const [state, setState] = useState<State>({ status: 'loading' })
 
+  // A spot with no station id can't be served (the Worker requires an explicit
+  // id and has no nearest-by-coords lookup) — render the same quiet designed
+  // state the dashboard module uses, not the network error state.
+  const tideId = parseNoaaStationId(tideStationId)
+  const currentId = currentStationId?.trim() || null
+  const servable = Boolean(tideId || currentId)
+
   useEffect(() => {
+    if (!servable) return
     const key = `7d:${spotId}`
     const cached = cache.get(key)
     if (cached && Date.now() - cached.at < CACHE_TTL) {
@@ -92,8 +100,6 @@ export function SevenDayConditions({
       return
     }
     const controller = new AbortController()
-    const tideId = parseNoaaStationId(tideStationId)
-    const currentId = currentStationId?.trim() || null
 
     async function load() {
       const [tRes, cRes] = await Promise.allSettled([
@@ -127,8 +133,15 @@ export function SevenDayConditions({
       if (!controller.signal.aborted) setState({ status: 'error' })
     })
     return () => controller.abort()
-  }, [spotId, tideStationId, currentStationId])
+  }, [spotId, tideId, currentId, servable])
 
+  if (!servable) {
+    return (
+      <p className="text-sm text-header/70">
+        Tide predictions unavailable for this location.
+      </p>
+    )
+  }
   if (state.status === 'loading') {
     return <p className="text-sm text-header">Loading 7-day tide &amp; current data…</p>
   }

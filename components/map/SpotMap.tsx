@@ -8,26 +8,53 @@ import 'leaflet/dist/leaflet.css'
 import { MAP_HEIGHT, type SpotMapProps } from './mapConstants'
 
 /**
- * Muted OSM underlay. Kept beneath the NOAA chart so land, town labels, and the
- * coastline never render as blank tiles where the chart has no coverage.
+ * Zoom policy. NOAA ENC renders useful chart detail roughly z9–z16; past ~z16 it
+ * over-zooms into sparse soundings, below ~z9 it's coastal overview. We clamp the
+ * map AND the layers to this band so no interaction can reach blank/over-zoomed
+ * tiles. Default per-spot zoom is tighter than a street map's so soundings and
+ * depth contours are visible on load (overridden by a spot's `zoomLevel`).
  */
-const BASE_LAYER = {
-  url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-  attribution: '&copy; OpenStreetMap',
-  maxZoom: 19,
+const MAP_MIN_ZOOM = 9
+const MAP_MAX_ZOOM = 16
+const DEFAULT_ZOOM = 14
+
+/**
+ * PRIMARY base: NOAA Chart Display Service (NCDS), OGC WMS. Renders NOAA ENC data
+ * with traditional paper-chart symbology — the chart look of the original Webflow
+ * spot page. Served via Leaflet core's `L.tileLayer.wms` (no extra dependency);
+ * the NCDS WMTS endpoint is advertised but does not serve tiles (HTTP 400), and
+ * the Esri REST option would need esri-leaflet. Verified 2026-07-17: GetMap
+ * returns chart PNGs across our whole territory (Canal, Buzzards Bay, Vineyard
+ * Sound, outer Cape). Endpoint isolated here so it's a one-line swap.
+ *
+ * NOAA charts are public-domain; attribution to the Office of Coast Survey is
+ * requested (matches the old site's "© NOAA Office of Coast Survey"). Leaflet's
+ * attribution control adds the "Leaflet" credit automatically → "Leaflet | © …".
+ */
+const NOAA_CHART_WMS = {
+  url: 'https://gis.charttools.noaa.gov/arcgis/rest/services/MCS/NOAAChartDisplay/MapServer/exts/MaritimeChartService/WMSServer',
+  layers: '0,1,2,3,4,5,6,7,8,9,10,11,12',
+  attribution: '&copy; NOAA Office of Coast Survey',
 }
 
 /**
- * NOAA Chart Display Service (WMS) — raster nautical charts, to match the chart
- * look of the original Webflow spot page. Isolated as one constant so the exact
- * endpoint/layers are a one-line swap. Attribution (NOAA Office of Coast Survey)
- * is required and flows into Leaflet's attribution control.
+ * NAMED fallback (kept, never deleted): plain OSM raster. Used only when the NOAA
+ * chart service fails persistently on load — the map must never render as an empty
+ * gray grid. Not shown otherwise.
  */
-const NOAA_CHART_WMS = {
-  url: 'https://gis.charttools.noaa.gov/arcgis/services/MCS/NOAAChartDisplay/MapServer/WMSServer',
-  layers: '0,1,2,3,4,5,6,7',
-  attribution: 'Chart data &copy; NOAA Office of Coast Survey',
+const OSM_FALLBACK = {
+  url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+  attribution: '&copy; OpenStreetMap',
 }
+
+/**
+ * Fallback trigger: if this many chart tiles fail within the initial-load window,
+ * the government service is treated as down and we swap to OSM. Bounded to the
+ * first seconds so a stray tileerror later in a long session doesn't demote a
+ * working chart.
+ */
+const FALLBACK_TILE_ERRORS = 6
+const FALLBACK_WINDOW_MS = 8000
 
 /**
  * A pure-CSS teardrop pin via `L.divIcon` — no image URLs, so it sidesteps
@@ -49,7 +76,7 @@ function toCoord(value: number | string | null | undefined): number | null {
   return Number.isFinite(n) ? n : null
 }
 
-export default function SpotMap({ lat, lng, name, zoom = 13 }: SpotMapProps) {
+export default function SpotMap({ lat, lng, name, zoom = DEFAULT_ZOOM }: SpotMapProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const latNum = toCoord(lat)
   const lngNum = toCoord(lng)
@@ -57,21 +84,50 @@ export default function SpotMap({ lat, lng, name, zoom = 13 }: SpotMapProps) {
 
   useEffect(() => {
     if (latNum === null || lngNum === null || !containerRef.current) return
-    const map = L.map(containerRef.current).setView([latNum, lngNum], zoom)
-    L.tileLayer(BASE_LAYER.url, {
-      attribution: BASE_LAYER.attribution,
-      maxZoom: BASE_LAYER.maxZoom,
-    }).addTo(map)
-    // NOAA nautical chart on top (transparent where the chart has no coverage).
-    L.tileLayer
-      .wms(NOAA_CHART_WMS.url, {
-        layers: NOAA_CHART_WMS.layers,
-        format: 'image/png',
-        transparent: true,
-        attribution: NOAA_CHART_WMS.attribution,
-      })
-      .addTo(map)
+    // Clamp the requested zoom into the chart-supported band so a spot's own
+    // zoomLevel can't land the view on blank/over-zoomed tiles.
+    const initialZoom = Math.min(MAP_MAX_ZOOM, Math.max(MAP_MIN_ZOOM, zoom))
+    const map = L.map(containerRef.current, {
+      minZoom: MAP_MIN_ZOOM,
+      maxZoom: MAP_MAX_ZOOM,
+    }).setView([latNum, lngNum], initialZoom)
+
+    // PRIMARY: NOAA nautical charts.
+    const noaa = L.tileLayer.wms(NOAA_CHART_WMS.url, {
+      layers: NOAA_CHART_WMS.layers,
+      format: 'image/png',
+      transparent: true,
+      version: '1.3.0',
+      attribution: NOAA_CHART_WMS.attribution,
+      minZoom: MAP_MIN_ZOOM,
+      maxZoom: MAP_MAX_ZOOM,
+    })
+    noaa.addTo(map)
+
+    // Resilience: government tile services blip. If the chart layer fails
+    // persistently during the initial load, swap to the OSM fallback so the map
+    // is never an empty gray grid. Bounded to the initial window; one-shot.
+    const startedAt = Date.now()
+    let tileErrors = 0
+    let fellBack = false
+    noaa.on('tileerror', () => {
+      if (fellBack || Date.now() - startedAt > FALLBACK_WINDOW_MS) return
+      tileErrors += 1
+      if (tileErrors < FALLBACK_TILE_ERRORS) return
+      fellBack = true
+      console.warn(
+        '[SpotMap] NOAA chart tiles failing on load — falling back to OSM base layer.',
+      )
+      map.removeLayer(noaa)
+      L.tileLayer(OSM_FALLBACK.url, {
+        attribution: OSM_FALLBACK.attribution,
+        minZoom: MAP_MIN_ZOOM,
+        maxZoom: MAP_MAX_ZOOM,
+      }).addTo(map)
+    })
+
     L.marker([latNum, lngNum], { icon: spotIcon }).addTo(map).bindPopup(name)
+
     // Destroy on unmount — React StrictMode double-mounts in dev would otherwise
     // leak map instances / throw "Map container is already initialized".
     return () => {
