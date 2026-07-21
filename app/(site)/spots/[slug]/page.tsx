@@ -16,7 +16,7 @@ import {
 import { SectionBox } from '@/components/spot/SectionBox'
 import { SpotTabs, type TabPanel } from '@/components/spot/SpotTabs'
 import { SpotToc } from '@/components/spot/SpotToc'
-import { SevenDayConditions } from '@/components/spot/tabs/SevenDayConditions'
+import { SevenDayPeakWindows } from '@/components/spot/tabs/SevenDayPeakWindows'
 import { ExtendedForecast } from '@/components/spot/tabs/ExtendedForecast'
 import { SstChart } from '@/components/spot/tabs/SstChart'
 import { WindyEmbed } from '@/components/spot/tabs/WindyEmbed'
@@ -439,17 +439,16 @@ export default async function SpotPage({
     </div>
   )
 
-  // --- Fishing Times panel (7-day conditions + seasonal windows)
+  // --- Fishing Times panel (7-day peak windows + seasonal windows)
   const fishingTimesPanel = (
     <div className="space-y-6">
       <div className="box">
         <h2 className="font-mono text-sm font-semibold uppercase tracking-wider text-header">
-          7-Day Tides &amp; Currents
+          Peak Fishing Times — Next 7 Days
         </h2>
         <hr className="my-3 border-body" />
-        <SevenDayConditions
+        <SevenDayPeakWindows
           spotId={spot._id}
-          tideStationId={spot.tideStationId}
           currentStationId={spot.currentStationId}
         />
       </div>

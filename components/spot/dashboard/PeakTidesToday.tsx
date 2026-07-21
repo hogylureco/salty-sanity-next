@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 
 import { type CurrentEvent, fetchWorkerJson } from '@/lib/worker'
+import { PILL, toPeakWindows } from '@/lib/peak-windows'
 
 export interface PeakTidesTodayProps {
   spotId: string
@@ -21,9 +22,6 @@ type State =
   | { status: 'error' }
   | { status: 'success'; data: Data }
 
-/** Half-width of a peak fishing window: 45 minutes on either side of the peak. */
-const WINDOW_MS = 45 * 60 * 1000
-
 /** Today's date in America/New_York as "Thu, Jul 17" for the module header. */
 function todayEasternLabel(): string {
   const parts = new Intl.DateTimeFormat('en-US', {
@@ -37,82 +35,9 @@ function todayEasternLabel(): string {
   return `${p.weekday}, ${p.month} ${p.day}`
 }
 
-/**
- * Worker current timestamps are "YYYY-MM-DD HH:mm" in the station's local
- * (Eastern) wall-clock time. Parse them into a UTC-based epoch so we can do pure
- * ±minute arithmetic for the window edges — treating the wall-clock as if it were
- * UTC keeps the browser's own timezone out of the math. Reformat with getUTC*.
- */
-function easternToUtcMs(ts: string): number | null {
-  const m = ts.match(/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})/)
-  if (!m) return null
-  return Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5])
-}
-
-/** UTC-based epoch → "3:24 PM". */
-function clock(ms: number): string {
-  const d = new Date(ms)
-  let hour = d.getUTCHours()
-  const min = String(d.getUTCMinutes()).padStart(2, '0')
-  const ampm = hour >= 12 ? 'PM' : 'AM'
-  hour = hour % 12 || 12
-  return `${hour}:${min} ${ampm}`
-}
-
-/** "YYYY-MM-DD HH:mm" for now in America/New_York (string-comparable). */
-function nowEastern(): string {
-  const parts = new Intl.DateTimeFormat('en-US', {
-    timeZone: 'America/New_York',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  }).formatToParts(new Date())
-  const p: Record<string, string> = {}
-  for (const part of parts) p[part.type] = part.value
-  const hour = p.hour === '24' ? '00' : p.hour
-  return `${p.year}-${p.month}-${p.day} ${hour}:${p.minute}`
-}
-
-interface PeakWindow {
-  key: string
-  tone: 'ebb' | 'flood'
-  label: string
-  range: string
-  knots: string
-}
-
-/**
- * Peak fishing windows = the max-current events NOAA returns (Type ebb/flood,
- * i.e. peak ebb and peak flood — the slack turns are excluded), each expanded to
- * the 45-minutes-either-side window. Only windows that haven't fully passed
- * (end ≥ now) are shown, next few first.
- */
-function peakWindows(currents: CurrentEvent[], count = 5): PeakWindow[] {
-  const nowMs = easternToUtcMs(nowEastern()) ?? 0
-  const out: PeakWindow[] = []
-  for (const c of currents) {
-    if (c.Type === 'slack') continue
-    const peak = easternToUtcMs(c.Time)
-    if (peak == null) continue
-    if (peak + WINDOW_MS < nowMs) continue // window fully in the past
-    out.push({
-      key: `${c.Time}-${c.Type}`,
-      tone: c.Type === 'ebb' ? 'ebb' : 'flood',
-      label: c.Type.toUpperCase(),
-      range: `${clock(peak - WINDOW_MS)} – ${clock(peak + WINDOW_MS)} ET`,
-      knots: `${Math.abs(c.Velocity_Major).toFixed(1)} kt`,
-    })
-    if (out.length >= count) break
-  }
-  return out
-}
-
-const PILL: Record<'ebb' | 'flood', string> = {
-  ebb: 'bg-red-dark/10 text-red-dark ring-1 ring-red-dark/30',
-  flood: 'bg-green-dark/10 text-green-dark ring-1 ring-green-dark/30',
+/** Today's upcoming peak windows — next few that haven't fully passed. */
+function peakWindows(currents: CurrentEvent[], count = 5) {
+  return toPeakWindows(currents, { sinceNow: true, count })
 }
 
 export function PeakTidesToday({
