@@ -40,5 +40,6 @@ export function DailyForecast() {
         </p>
       </div>
     </section>
+    
   )
 }

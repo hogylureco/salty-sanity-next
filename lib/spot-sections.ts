@@ -59,12 +59,18 @@ export function headingsOf(
 ): Heading[] {
   if (!Array.isArray(value)) return []
   const out: Heading[] = []
+  const seen = new Set<string>()
   for (const block of value as PtBlock[]) {
     if (block?._type !== 'block') continue
     if (!block.style || !styles.includes(block.style)) continue
     const text = blockPlainText(block)
     if (!text) continue
-    out.push({ id: slugifyHeading(text), title: text })
+    const id = slugifyHeading(text)
+    // Two headings with the same text slugify to the same anchor id; keep the
+    // first (matches the first rendered heading) so TOC keys/entries stay unique.
+    if (seen.has(id)) continue
+    seen.add(id)
+    out.push({ id, title: text })
     if (out.length >= max) break
   }
   return out

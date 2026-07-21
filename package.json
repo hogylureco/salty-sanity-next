@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "typegen": "sanity schema extract && sanity typegen generate",
-    "simulate-webhook": "tsx scripts/simulate-webhook.ts"
+    "simulate-webhook": "tsx scripts/simulate-webhook.ts",
+    "publish-all": "tsx scripts/publish-all.ts"
   },
   "dependencies": {
     "@builder.io/sdk-react": "^5.2.4",
