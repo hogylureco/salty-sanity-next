@@ -77,15 +77,28 @@ function toCoord(value: number | string | null | undefined): number | null {
 }
 
 /**
+ * Clean, low-contrast base used UNDER the SST overlay. The NOAA chart's dense
+ * symbology fights a color heat-layer, so the SST view swaps the chart for this
+ * light basemap — land/coastline for context, nothing that competes with the
+ * temperature colors. (The plain nautical-chart view keeps the NOAA base.)
+ */
+const LIGHT_BASE = {
+  url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
+  subdomains: 'abcd',
+  attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+}
+
+/**
  * XWeather sea-surface-temperature raster, proxied same-origin (the proxy holds
  * the credentials — see app/api/xweather). Painted on its own pane above the
- * chart tiles but below the marker, semi-transparent so the chart reads through.
- * `maxNativeZoom` caps upstream requests (SST is coarse, updates ~6h) and lets
- * Leaflet upscale past it instead of requesting empty high-zoom tiles.
+ * base tiles but below the marker. Opaque enough to read as a heat-map over the
+ * light base. `maxNativeZoom` caps upstream requests (SST is coarse, updates
+ * ~6h) and lets Leaflet upscale past it instead of requesting empty high-zoom
+ * tiles.
  */
 const SST_OVERLAY = {
   url: '/api/xweather/maritime-sst/{z}/{x}/{y}',
-  opacity: 0.6,
+  opacity: 0.85,
   maxNativeZoom: 10,
 }
 
@@ -111,44 +124,16 @@ export default function SpotMap({
       maxZoom: MAP_MAX_ZOOM,
     }).setView([latNum, lngNum], initialZoom)
 
-    // PRIMARY: NOAA nautical charts.
-    const noaa = L.tileLayer.wms(NOAA_CHART_WMS.url, {
-      layers: NOAA_CHART_WMS.layers,
-      format: 'image/png',
-      transparent: true,
-      version: '1.3.0',
-      attribution: NOAA_CHART_WMS.attribution,
-      minZoom: MAP_MIN_ZOOM,
-      maxZoom: MAP_MAX_ZOOM,
-    })
-    noaa.addTo(map)
-
-    // Resilience: government tile services blip. If the chart layer fails
-    // persistently during the initial load, swap to the OSM fallback so the map
-    // is never an empty gray grid. Bounded to the initial window; one-shot.
-    const startedAt = Date.now()
-    let tileErrors = 0
-    let fellBack = false
-    noaa.on('tileerror', () => {
-      if (fellBack || Date.now() - startedAt > FALLBACK_WINDOW_MS) return
-      tileErrors += 1
-      if (tileErrors < FALLBACK_TILE_ERRORS) return
-      fellBack = true
-      console.warn(
-        '[SpotMap] NOAA chart tiles failing on load — falling back to OSM base layer.',
-      )
-      map.removeLayer(noaa)
-      L.tileLayer(OSM_FALLBACK.url, {
-        attribution: OSM_FALLBACK.attribution,
+    if (sstOverlay) {
+      // SST view: clean light base (no nautical-chart clutter) + the SST heat
+      // layer on top, so the temperature colors render clearly.
+      L.tileLayer(LIGHT_BASE.url, {
+        subdomains: LIGHT_BASE.subdomains,
+        attribution: LIGHT_BASE.attribution,
         minZoom: MAP_MIN_ZOOM,
         maxZoom: MAP_MAX_ZOOM,
       }).addTo(map)
-    })
 
-    // SST overlay on a dedicated pane (zIndex between base tiles=200 and
-    // overlays=400) so it stays above the chart — and above the OSM fallback if
-    // that ever swaps in — but under the marker.
-    if (sstOverlay) {
       map.createPane('sst')
       const sstPane = map.getPane('sst')
       if (sstPane) sstPane.style.zIndex = '350'
@@ -160,6 +145,40 @@ export default function SpotMap({
         maxZoom: MAP_MAX_ZOOM,
         attribution: '&copy; XWeather',
       }).addTo(map)
+    } else {
+      // PRIMARY: NOAA nautical charts.
+      const noaa = L.tileLayer.wms(NOAA_CHART_WMS.url, {
+        layers: NOAA_CHART_WMS.layers,
+        format: 'image/png',
+        transparent: true,
+        version: '1.3.0',
+        attribution: NOAA_CHART_WMS.attribution,
+        minZoom: MAP_MIN_ZOOM,
+        maxZoom: MAP_MAX_ZOOM,
+      })
+      noaa.addTo(map)
+
+      // Resilience: government tile services blip. If the chart layer fails
+      // persistently during the initial load, swap to the OSM fallback so the
+      // map is never an empty gray grid. Bounded to the initial window; one-shot.
+      const startedAt = Date.now()
+      let tileErrors = 0
+      let fellBack = false
+      noaa.on('tileerror', () => {
+        if (fellBack || Date.now() - startedAt > FALLBACK_WINDOW_MS) return
+        tileErrors += 1
+        if (tileErrors < FALLBACK_TILE_ERRORS) return
+        fellBack = true
+        console.warn(
+          '[SpotMap] NOAA chart tiles failing on load — falling back to OSM base layer.',
+        )
+        map.removeLayer(noaa)
+        L.tileLayer(OSM_FALLBACK.url, {
+          attribution: OSM_FALLBACK.attribution,
+          minZoom: MAP_MIN_ZOOM,
+          maxZoom: MAP_MAX_ZOOM,
+        }).addTo(map)
+      })
     }
 
     L.marker([latNum, lngNum], { icon: spotIcon }).addTo(map).bindPopup(name)

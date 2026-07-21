@@ -94,7 +94,7 @@ export function SstChart({ lat, lng, zoom, name }: SstChartProps) {
       )}
 
       <p className="mt-4 font-mono text-[0.7rem] uppercase tracking-wide text-header/60">
-        SST overlay from XWeather · chart from NOAA
+        SST from XWeather · basemap © CARTO / OpenStreetMap
       </p>
     </div>
   )
