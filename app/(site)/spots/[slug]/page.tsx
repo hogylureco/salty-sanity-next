@@ -18,6 +18,8 @@ import { SpotTabs, type TabPanel } from '@/components/spot/SpotTabs'
 import { SpotToc } from '@/components/spot/SpotToc'
 import { SevenDayConditions } from '@/components/spot/tabs/SevenDayConditions'
 import { ExtendedForecast } from '@/components/spot/tabs/ExtendedForecast'
+import { SeaSurfaceTemp } from '@/components/spot/tabs/SeaSurfaceTemp'
+import { WindyEmbed } from '@/components/spot/tabs/WindyEmbed'
 import {
   DebugTableDumps,
   type DebugDumpGroup,
@@ -516,7 +518,18 @@ export default async function SpotPage({
     {
       id: 'weather',
       label: 'Weather',
-      content: <ExtendedForecast lat={spot.latitude} lng={spot.longitude} />,
+      content: (
+        <div className="space-y-6">
+          <SeaSurfaceTemp lat={spot.latitude} lng={spot.longitude} />
+          <WindyEmbed
+            lat={spot.latitude}
+            lng={spot.longitude}
+            zoom={spot.zoomLevel ?? undefined}
+            name={title}
+          />
+          <ExtendedForecast lat={spot.latitude} lng={spot.longitude} />
+        </div>
+      ),
     },
     { id: 'gear', label: 'Gear', content: gearPanel },
     { id: 'nearby', label: 'Nearby Spots', content: nearbyPanel },

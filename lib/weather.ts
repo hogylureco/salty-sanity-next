@@ -54,3 +54,25 @@ export async function fetchForecast(
   if (!res.ok) throw new Error(`Forecast HTTP ${res.status}`)
   return (await res.json()) as ForecastResponse
 }
+
+/**
+ * Sea-surface temperature for a coordinate. Sourced from XWeather's maritime
+ * data API server-side (see /api/sst + lib/weather-xweather.ts) — the client
+ * only ever sees this normalized reading, never the XWeather credentials.
+ */
+export interface SstReading {
+  tempF: number
+  tempC: number | null
+  /** ISO timestamp of the reading. */
+  observed: string | null
+}
+
+export async function fetchSst(
+  lat: number,
+  lng: number,
+  signal: AbortSignal,
+): Promise<SstReading> {
+  const res = await fetch(`/api/sst?lat=${lat}&lng=${lng}`, { signal })
+  if (!res.ok) throw new Error(`SST HTTP ${res.status}`)
+  return (await res.json()) as SstReading
+}
