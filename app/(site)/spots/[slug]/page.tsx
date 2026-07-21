@@ -513,7 +513,11 @@ export default async function SpotPage({
     { id: 'overview', label: 'Overview', content: overviewPanel },
     { id: 'videos', label: 'Videos', content: videosPanel },
     { id: 'fishing-times', label: 'Fishing Times', content: fishingTimesPanel },
-    { id: 'weather', label: 'Weather', content: <ExtendedForecast /> },
+    {
+      id: 'weather',
+      label: 'Weather',
+      content: <ExtendedForecast lat={spot.latitude} lng={spot.longitude} />,
+    },
     { id: 'gear', label: 'Gear', content: gearPanel },
     { id: 'nearby', label: 'Nearby Spots', content: nearbyPanel },
     { id: 'playbooks', label: 'Playbooks', content: playbooksPanel },
