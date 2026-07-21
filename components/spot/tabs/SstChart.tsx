@@ -68,11 +68,14 @@ export function SstChart({ lat, lng, zoom, name }: SstChartProps) {
       ) : (
         <>
           <div className="overflow-hidden rounded-[5px] border border-body">
+            {/* SST is coarse, so pull back 3 zoom levels from the spot's own
+                zoom to show the temperature gradient across the surrounding
+                water (clamped to the map's min zoom). */}
             <SpotMapLoader
               lat={lat}
               lng={lng}
               name={name}
-              zoom={zoom}
+              zoom={typeof zoom === 'number' ? zoom - 3 : undefined}
               sstOverlay
             />
           </div>
