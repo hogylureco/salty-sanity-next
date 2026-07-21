@@ -11,4 +11,6 @@ export interface SpotMapProps {
   lng: number | string | null | undefined
   name: string
   zoom?: number
+  /** Overlay the XWeather sea-surface-temperature raster on the chart. */
+  sstOverlay?: boolean
 }

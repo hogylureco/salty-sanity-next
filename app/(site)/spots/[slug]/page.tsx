@@ -18,7 +18,7 @@ import { SpotTabs, type TabPanel } from '@/components/spot/SpotTabs'
 import { SpotToc } from '@/components/spot/SpotToc'
 import { SevenDayConditions } from '@/components/spot/tabs/SevenDayConditions'
 import { ExtendedForecast } from '@/components/spot/tabs/ExtendedForecast'
-import { SeaSurfaceTemp } from '@/components/spot/tabs/SeaSurfaceTemp'
+import { SstChart } from '@/components/spot/tabs/SstChart'
 import { WindyEmbed } from '@/components/spot/tabs/WindyEmbed'
 import {
   DebugTableDumps,
@@ -520,7 +520,12 @@ export default async function SpotPage({
       label: 'Weather',
       content: (
         <div className="space-y-6">
-          <SeaSurfaceTemp lat={spot.latitude} lng={spot.longitude} />
+          <SstChart
+            lat={spot.latitude}
+            lng={spot.longitude}
+            zoom={spot.zoomLevel ?? undefined}
+            name={title}
+          />
           <WindyEmbed
             lat={spot.latitude}
             lng={spot.longitude}

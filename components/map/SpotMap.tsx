@@ -76,7 +76,26 @@ function toCoord(value: number | string | null | undefined): number | null {
   return Number.isFinite(n) ? n : null
 }
 
-export default function SpotMap({ lat, lng, name, zoom = DEFAULT_ZOOM }: SpotMapProps) {
+/**
+ * XWeather sea-surface-temperature raster, proxied same-origin (the proxy holds
+ * the credentials — see app/api/xweather). Painted on its own pane above the
+ * chart tiles but below the marker, semi-transparent so the chart reads through.
+ * `maxNativeZoom` caps upstream requests (SST is coarse, updates ~6h) and lets
+ * Leaflet upscale past it instead of requesting empty high-zoom tiles.
+ */
+const SST_OVERLAY = {
+  url: '/api/xweather/maritime-sst/{z}/{x}/{y}',
+  opacity: 0.6,
+  maxNativeZoom: 10,
+}
+
+export default function SpotMap({
+  lat,
+  lng,
+  name,
+  zoom = DEFAULT_ZOOM,
+  sstOverlay = false,
+}: SpotMapProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const latNum = toCoord(lat)
   const lngNum = toCoord(lng)
@@ -126,6 +145,23 @@ export default function SpotMap({ lat, lng, name, zoom = DEFAULT_ZOOM }: SpotMap
       }).addTo(map)
     })
 
+    // SST overlay on a dedicated pane (zIndex between base tiles=200 and
+    // overlays=400) so it stays above the chart — and above the OSM fallback if
+    // that ever swaps in — but under the marker.
+    if (sstOverlay) {
+      map.createPane('sst')
+      const sstPane = map.getPane('sst')
+      if (sstPane) sstPane.style.zIndex = '350'
+      L.tileLayer(SST_OVERLAY.url, {
+        pane: 'sst',
+        opacity: SST_OVERLAY.opacity,
+        maxNativeZoom: SST_OVERLAY.maxNativeZoom,
+        minZoom: MAP_MIN_ZOOM,
+        maxZoom: MAP_MAX_ZOOM,
+        attribution: '&copy; XWeather',
+      }).addTo(map)
+    }
+
     L.marker([latNum, lngNum], { icon: spotIcon }).addTo(map).bindPopup(name)
 
     // Destroy on unmount — React StrictMode double-mounts in dev would otherwise
@@ -133,7 +169,7 @@ export default function SpotMap({ lat, lng, name, zoom = DEFAULT_ZOOM }: SpotMap
     return () => {
       map.remove()
     }
-  }, [latNum, lngNum, zoom, name])
+  }, [latNum, lngNum, zoom, name, sstOverlay])
 
   if (!hasCoords) {
     return (
