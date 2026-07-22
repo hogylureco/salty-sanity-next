@@ -7,15 +7,12 @@ import {environmental} from './documents/environmental'
 import {gearPost} from './documents/gearPost'
 import {historical} from './documents/historical'
 import {lureCatalog} from './documents/lureCatalog'
-import {lureCatalogLegacy} from './documents/lureCatalogLegacy'
 import {lureGearCategory} from './documents/lureGearCategory'
-import {lureGearCategoryLegacy} from './documents/lureGearCategoryLegacy'
 import {method} from './documents/method'
 import {microSeason} from './documents/microSeason'
 import {mode} from './documents/mode'
 import {observational} from './documents/observational'
 import {parentLure} from './documents/parentLure'
-import {parentLureLegacy} from './documents/parentLureLegacy'
 import {platform} from './documents/platform'
 import {postType} from './documents/postType'
 import {region} from './documents/region'
@@ -26,7 +23,6 @@ import {structure} from './documents/structure'
 import {structureType} from './documents/structureType'
 import {targetSpecies} from './documents/targetSpecies'
 import {techniqueRetrieve} from './documents/techniqueRetrieve'
-import {techniqueRetrieveLegacy} from './documents/techniqueRetrieveLegacy'
 import {video} from './documents/video'
 import {zone} from './documents/zone'
 import {richText} from './objects/richText'
@@ -42,13 +38,17 @@ import {richText} from './objects/richText'
 const objectTypes: SchemaTypeDefinition[] = [richText]
 
 /**
- * One entry per document type present in the `production` dataset.
+ * One entry per CANONICAL document type in the `production` dataset.
  *
- * Four of them exist as near-duplicate pairs — a camelCase variant and a
- * hyphenated one (`lureCatalog`/`lure-catalog`, `lureGearCategory`/
- * `lure-gear-category`, `parentLure`/`parent-lure`, `techniqueRetrieve`/
- * `technique-retrieve`). Both members of every pair hold real documents, so
- * both are registered.
+ * The dataset also holds a parallel set of orphaned hyphenated stub documents
+ * (`lure-catalog`, `lure-gear-category`, `parent-lure`, `technique-retrieve`)
+ * left behind by an early kebab-case import — sparse id/name/slug records with
+ * zero incoming references, superseded by the camelCase types below (which carry
+ * the full fields, image URLs, and all the reference wiring the app queries).
+ * Those hyphenated types are deliberately NOT registered here, so this Studio
+ * matches the Sanity-hosted one and doesn't surface the junk. The stub documents
+ * are slated for deletion from the dataset; until then they simply render as
+ * "unknown type" if opened directly and never appear in the desk.
  */
 const documentTypes: SchemaTypeDefinition[] = [
   approach,
@@ -58,15 +58,12 @@ const documentTypes: SchemaTypeDefinition[] = [
   gearPost,
   historical,
   lureCatalog,
-  lureCatalogLegacy,
   lureGearCategory,
-  lureGearCategoryLegacy,
   method,
   microSeason,
   mode,
   observational,
   parentLure,
-  parentLureLegacy,
   platform,
   postType,
   region,
@@ -77,7 +74,6 @@ const documentTypes: SchemaTypeDefinition[] = [
   structureType,
   targetSpecies,
   techniqueRetrieve,
-  techniqueRetrieveLegacy,
   video,
   zone,
 ]
