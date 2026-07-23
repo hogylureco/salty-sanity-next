@@ -29,6 +29,7 @@ import { SpotCard, type SpotCardData } from '@/components/SpotCard'
 import { VideoCard } from '@/components/video/VideoCard'
 import { breadcrumbList, placeSchema, type Crumb } from '@/lib/jsonld'
 import { sanityFetch } from '@/lib/sanity/client'
+import { buildNearbyMarkers } from '@/lib/nearby'
 import { hasPortableText, headingsOf, type TocEntry } from '@/lib/spot-sections'
 import { bothIdForms, regionForSpot } from '@/lib/taxonomy'
 import { formatVideoDate, videoHref, youtubeThumb } from '@/lib/video'
@@ -57,9 +58,15 @@ function resolved<T>(items: Array<T | null> | null | undefined): T[] {
   return (items ?? []).filter((it): it is T => it != null)
 }
 
-/** "fs-featured-spot" → "Featured Spot". A raw slug is not display-ready. */
+/** Display label for a raw spotType. `fs-featured-spot` is branded "Inshore Boat
+ *  Spot"; anything else is title-cased from its slug (a raw slug isn't display-
+ *  ready). */
 function formatSpotType(raw: string | null): string | null {
   if (!raw) return null
+  const known: Record<string, string> = {
+    'fs-featured-spot': 'Inshore Boat Spot',
+  }
+  if (known[raw]) return known[raw]
   return raw
     .replace(/^fs-/, '')
     .split('-')
@@ -72,13 +79,6 @@ function formatSpotType(raw: string | null): string | null {
 function formatCoords(lat: number | null, lng: number | null): string | null {
   if (typeof lat !== 'number' || typeof lng !== 'number') return null
   return `${lat.toFixed(6)}, ${lng.toFixed(6)}`
-}
-
-/** Coerce a scalar field to a display string ("—" when empty). */
-function scalar(value: unknown): string {
-  if (value === null || value === undefined || value === '') return '—'
-  if (Array.isArray(value)) return value.length ? value.join(', ') : '—'
-  return String(value)
 }
 
 /** A wrap of reference chips → taxonomy links (or inert chips when no route). */
@@ -123,51 +123,6 @@ function SubBlock({ label, children }: { label: string; children: ReactNode }) {
       </p>
       {children}
     </div>
-  )
-}
-
-/**
- * Collapsed metadata block — keeps every scalar the pre-redesign "Fields" dump
- * exposed reachable (zero-regression) without cluttering the redesign.
- */
-function SpotMetaDetails({ spot }: { spot: Spot }) {
-  const rows: Array<[string, unknown]> = [
-    ['spotId', spot.spotId],
-    ['postType', spot.postType],
-    ['version', spot.version],
-    ['publishDate', spot.publishDate],
-    ['hazards', spot.hazards],
-    ['approachCodePrefix', spot.approachCodePrefix],
-    ['approachCount', spot.approachCount],
-    ['microSeasons (text)', spot.microSeasons],
-    ['zoomLevel', spot.zoomLevel],
-    ['macroRegion', spot.macroRegion],
-    ['platform', spot.platform],
-    ['tideVariance', spot.tideVariance],
-    ['tideStationId', spot.tideStationId],
-    ['currentStationId', spot.currentStationId],
-    ['gpxFile', spot.gpxFile],
-    ['featuredImage.alt', spot.featuredImage?.alt],
-    ['_type', spot._type],
-    ['_createdAt', spot._createdAt],
-    ['_updatedAt', spot._updatedAt],
-  ]
-  return (
-    <details className="box">
-      <summary className="cursor-pointer font-mono text-sm font-semibold uppercase tracking-wider text-header">
-        Spot Data
-      </summary>
-      <dl className="mt-3 divide-y divide-body">
-        {rows.map(([label, value]) => (
-          <div key={label} className="flex flex-wrap gap-x-3 py-1">
-            <dt className="min-w-[11rem] font-mono text-xs uppercase tracking-wide text-header">
-              {label}
-            </dt>
-            <dd className="text-sm text-ink">{scalar(value)}</dd>
-          </div>
-        ))}
-      </dl>
-    </details>
   )
 }
 
@@ -362,78 +317,148 @@ export default async function SpotPage({
 
   const nearby = resolved(spot.nearbySpots) as SpotCardData[]
 
-  // --- Overview panel: the 3-column body (TOC | narrative | rails). The grid
-  //     sits on a child div, NOT the tab panel wrapper, so `hidden` works.
-  const overviewPanel = (
-    <div className="lg:grid lg:grid-cols-[180px_minmax(0,1fr)_260px] lg:items-start lg:gap-6">
-      <SpotToc entries={tocEntries} />
+  // Nearby markers for the dashboard chart, built server-side (keeps the page
+  // static). Same curated `nearbySpots` source as the tab; null-guarded and
+  // stega-cleaned in lib/nearby.
+  const nearbyMap = buildNearbyMarkers(
+    { id: spot.id, latitude: spot.latitude, longitude: spot.longitude },
+    spot.nearbySpots,
+  )
 
-      <div className="min-w-0 space-y-6">
-        {sections.map((s) => (
-          <SectionBox
-            key={s.id}
-            id={s.id}
-            title={s.title}
-            icon={s.icon}
-            isEmpty={!s.hasContent}
-          >
-            {s.body}
-          </SectionBox>
-        ))}
-        <MoreAboutSpot groups={moreGroups} />
-        <SpotMetaDetails spot={spot} />
+  // Normalized related-video props (href-validated once), shared by the Overview
+  // slider and the Videos tab grid so the two never drift. Cards link to the
+  // in-app video page (/videos/[slug]); only a slugless video falls back to its
+  // YouTube link (external), which `external` signals to VideoCard.
+  const videoItems = relatedVideos
+    .map((v) => {
+      const internalHref = v.slug ? `/videos/${v.slug}` : null
+      const href = internalHref ?? videoHref(v.watchURL, v.videoID)
+      if (!href) return null
+      return {
+        key: v._id,
+        title: v.title ?? 'Untitled video',
+        date: formatVideoDate(v.videoFilmDate),
+        regionName: v.region?.name ?? null,
+        regionSlug: v.region?.slug ?? null,
+        thumbnailUrl: youtubeThumb(v.videoID),
+        href,
+        external: internalHref === null,
+      }
+    })
+    .filter((v): v is NonNullable<typeof v> => v !== null)
+
+  // --- Overview panel. Top: the dashboard (peak fishing times today + chart),
+  //     moved here from above the tabs. Then a horizontal related-videos slider.
+  //     Then the 3-column body (TOC | narrative | rails). The outer wrapper carries
+  //     spacing only — no display utility — so the tab wrapper's `hidden` wins.
+  const overviewPanel = (
+    <div className="space-y-6">
+      {/* Dashboard: peak fishing times today + the chart. */}
+      <div className="grid gap-4 md:grid-cols-3">
+        <div className="box">
+          <PeakTidesToday
+            spotId={spot._id}
+            currentStationId={spot.currentStationId}
+          />
+        </div>
+        <div className="box overflow-hidden p-0 md:col-span-2">
+          <SpotMapLoader
+            lat={spot.latitude}
+            lng={spot.longitude}
+            name={title}
+            zoom={spot.zoomLevel ?? undefined}
+            nearby={nearbyMap.markers}
+            fitNearbyBounds={nearbyMap.allWithinCap}
+          />
+        </div>
       </div>
 
-      <aside className="mt-6 space-y-6 lg:mt-0">
+      {/* Related videos — a horizontal, snap-scrolling slider (below the chart /
+          peak times). Omitted entirely when there are no playable videos. */}
+      {videoItems.length > 0 && (
         <div className="box">
-          <GearRail
-            items={spot.lureCatalog as Array<GearItem | null> | null}
-            variant="rail"
-            max={3}
-          />
+          <h2 className="font-mono text-sm font-semibold uppercase tracking-wider text-header">
+            Related Videos
+          </h2>
+          <hr className="my-3 border-body" />
+          <ul className="-mx-1 flex snap-x gap-4 overflow-x-auto px-1 pb-2">
+            {videoItems.map(({ key, ...v }) => (
+              <li key={key} className="w-64 shrink-0 snap-start sm:w-72">
+                <VideoCard {...v} />
+              </li>
+            ))}
+          </ul>
         </div>
-        <div className="box">
-          <StructureSpecies
-            depthRange={spot.depthRange}
-            targetSpecies={spot.targetSpecies}
-            baitfish={spot.baitfish}
-            structures={spot.structureTypes}
-          />
+      )}
+
+      {/* 3-column body. The grid sits on this child div, NOT the panel wrapper. */}
+      <div className="lg:grid lg:grid-cols-[180px_minmax(0,1fr)_260px] lg:items-start lg:gap-6">
+        <SpotToc entries={tocEntries} />
+
+        <div className="min-w-0 space-y-6">
+          {sections.map((s) => (
+            <SectionBox
+              key={s.id}
+              id={s.id}
+              title={s.title}
+              icon={s.icon}
+              isEmpty={!s.hasContent}
+            >
+              {s.body}
+            </SectionBox>
+          ))}
+          <MoreAboutSpot groups={moreGroups} />
         </div>
-      </aside>
+
+        <aside className="mt-6 space-y-6 lg:mt-0">
+          <div className="box">
+            <GearRail
+              items={spot.lureCatalog as Array<GearItem | null> | null}
+              variant="rail"
+              max={3}
+            />
+          </div>
+          <div className="box">
+            <StructureSpecies
+              depthRange={spot.depthRange}
+              targetSpecies={spot.targetSpecies}
+              baitfish={spot.baitfish}
+              structures={spot.structureTypes}
+            />
+          </div>
+        </aside>
+      </div>
     </div>
   )
 
-  // --- Videos panel
-  const videoCards = relatedVideos
-    .map((v) => {
-      const href = videoHref(v.watchURL, v.videoID)
-      if (!href) return null
-      return (
-        <VideoCard
-          key={v._id}
-          title={v.title ?? 'Untitled video'}
-          date={formatVideoDate(v.videoFilmDate)}
-          regionName={v.region?.name}
-          regionSlug={v.region?.slug}
-          thumbnailUrl={youtubeThumb(v.videoID)}
-          href={href}
-        />
-      )
-    })
-    .filter(Boolean)
+  // --- Chart panel: the same chart, on its own full-width tab.
+  const chartPanel = (
+    <div className="box overflow-hidden p-0">
+      <SpotMapLoader
+        lat={spot.latitude}
+        lng={spot.longitude}
+        name={title}
+        zoom={spot.zoomLevel ?? undefined}
+        nearby={nearbyMap.markers}
+        fitNearbyBounds={nearbyMap.allWithinCap}
+      />
+    </div>
+  )
 
+  // --- Videos panel: the full grid (same normalized items as the Overview slider).
   const videosPanel = (
     <div className="box">
       <h2 className="font-mono text-sm font-semibold uppercase tracking-wider text-header">
         Related Videos
       </h2>
       <hr className="my-3 border-body" />
-      {videoCards.length === 0 ? (
+      {videoItems.length === 0 ? (
         <p className="text-sm text-[#535c71]">No videos for this spot yet.</p>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {videoCards}
+          {videoItems.map(({ key, ...v }) => (
+            <VideoCard key={key} {...v} />
+          ))}
         </div>
       )}
     </div>
@@ -512,6 +537,7 @@ export default async function SpotPage({
 
   const tabPanels: TabPanel[] = [
     { id: 'overview', label: 'Overview', content: overviewPanel },
+    { id: 'chart', label: 'Chart', content: chartPanel },
     { id: 'videos', label: 'Videos', content: videosPanel },
     { id: 'fishing-times', label: 'Fishing Times', content: fishingTimesPanel },
     {
@@ -519,18 +545,20 @@ export default async function SpotPage({
       label: 'Weather',
       content: (
         <div className="space-y-6">
-          <SstChart
-            lat={spot.latitude}
-            lng={spot.longitude}
-            zoom={spot.zoomLevel ?? undefined}
-            name={title}
-          />
-          <WindyEmbed
-            lat={spot.latitude}
-            lng={spot.longitude}
-            zoom={spot.zoomLevel ?? undefined}
-            name={title}
-          />
+          <div className="grid gap-6 lg:grid-cols-2">
+            <SstChart
+              lat={spot.latitude}
+              lng={spot.longitude}
+              zoom={spot.zoomLevel ?? undefined}
+              name={title}
+            />
+            <WindyEmbed
+              lat={spot.latitude}
+              lng={spot.longitude}
+              zoom={spot.zoomLevel ?? undefined}
+              name={title}
+            />
+          </div>
           <ExtendedForecast lat={spot.latitude} lng={spot.longitude} />
         </div>
       ),
@@ -581,32 +609,9 @@ export default async function SpotPage({
         )}
       </header>
 
-      {/* Optional lead card (spotCard) when present. */}
-      {hasPortableText(spot.spotCard) && (
-        <div className="box mt-6">
-          <SpotPortableText value={spot.spotCard} />
-        </div>
-      )}
-
-      {/* --- Dashboard row (always visible, above the tabs) --- */}
-      <div className="mt-6 grid gap-4 md:grid-cols-3">
-        <div className="box">
-          <PeakTidesToday
-            spotId={spot._id}
-            currentStationId={spot.currentStationId}
-          />
-        </div>
-        <div className="box overflow-hidden p-0 md:col-span-2">
-          <SpotMapLoader
-            lat={spot.latitude}
-            lng={spot.longitude}
-            name={title}
-            zoom={spot.zoomLevel ?? undefined}
-          />
-        </div>
-      </div>
-
-      {/* --- Real tab system --- */}
+      {/* --- Tabs, directly under the hero. The peak-times + chart dashboard now
+          lives inside the Overview tab; the chart also gets its own full-width
+          Chart tab. --- */}
       <div className="mt-6">
         <SpotTabs panels={tabPanels} />
       </div>

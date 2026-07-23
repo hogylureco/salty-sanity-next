@@ -1033,7 +1033,7 @@ export type AllSanitySchemaTypes =
 
 // Source: lib/sanity/queries.ts
 // Variable: spotBySlugQuery
-// Query: *[_type == "spot" && slug.current == $slug][0]{    // --- identity / system ---    _id,    _type,    _createdAt,    _updatedAt,    id,    name,    "slug": slug.current,    // --- details ---    spotId,    postType,    spotType,    version,    publishDate,    depthRange,    hazards,    approachCodePrefix,    approachCount,    microSeasons,    // --- location ---    latitude,    longitude,    zoomLevel,    macroRegion,    platform,    tideStationId,    currentStationId,    tideVariance,    gpxFile,    // --- content: image (resolved to URL + dimensions in the projection) ---    featuredImage{      alt,      caption,      hotspot,      crop,      "url": asset->url,      "dimensions": asset->metadata.dimensions    },    // Plain-text description for JSON-LD / metadata (no dedicated SEO field).    "descriptionText": pt::text(coalesce(spotCard, captMikeNotes, historicalAnalysis, environmentalFactors)),    // --- content: portable text (narrative sections; any may be null) ---    spotCard,    captMikeNotes,    historicalAnalysis,    environmentalFactors,    observationalFactors,    structureApproach,    gearTechnique,    QAcaptMike,    // --- relationships (weak refs; dangling targets resolve to null) ---    approaches[]->{  _id,  name,  "slug": slug.current},    baitfish[]->{  _id,  name,  "slug": slug.current},    lureCatalog[]->{  _id,  name,  "slug": slug.current,  imageURL,  websiteLink},    lureGearCategory[]->{  _id,  name,  "slug": slug.current},    microSeason[]->{  _id,  name,  "slug": slug.current},    mode[]->{  _id,  name,  "slug": slug.current},    parentLure[]->{  _id,  name,  "slug": slug.current},    region[]->{  _id,  name,  "slug": slug.current},    // Raw refs (not deref'd) so the server can build the related-videos query    // params — most deref to null (dangling), but the _ref value is matchable.    "regionRef": region[0]._ref,    "targetSpeciesRefs": targetSpecies[]._ref,    seasons[]->{  _id,  name,  "slug": slug.current},    "structureTypes": coalesce(      structureTypes[]->{  _id,  name,  "slug": slug.current},      structure[]->{  _id,  name,  "slug": slug.current}    ),    targetSpecies[]->{  _id,  name,  "slug": slug.current},    techniqueRetrieve[]->{  _id,  name,  "slug": slug.current},    zone[]->{  _id,  name,  "slug": slug.current},    relatedVideos[]->{  _id,  name,  "slug": slug.current},    boatRamps[]->{  _id,  name,  "slug": slug.current},    nearbySpots[]->{      _id,      name,      id,      "slug": slug.current,      // Coordinates power the chart's nearby markers (see lib/nearby.ts); scalar      // lat/lng, not a geopoint. Any may be null on an unmapped spot.      latitude,      longitude,      "summary": pt::text(coalesce(spotCard, captMikeNotes))    },    subSpotsFXApproaches[]->{  _id,  name,  "slug": slug.current}  }
+// Query: *[_type == "spot" && slug.current == $slug][0]{    // --- identity / system ---    _id,    _type,    _createdAt,    _updatedAt,    id,    name,    "slug": slug.current,    // --- details ---    spotId,    postType,    spotType,    version,    publishDate,    depthRange,    hazards,    approachCodePrefix,    approachCount,    microSeasons,    // --- location ---    latitude,    longitude,    zoomLevel,    macroRegion,    platform,    tideStationId,    currentStationId,    tideVariance,    gpxFile,    // --- content: image (resolved to URL + dimensions in the projection) ---    featuredImage{      alt,      caption,      hotspot,      crop,      "url": asset->url,      "dimensions": asset->metadata.dimensions    },    // Plain-text description for JSON-LD / metadata (no dedicated SEO field).    "descriptionText": pt::text(coalesce(spotCard, captMikeNotes, historicalAnalysis, environmentalFactors)),    // --- content: portable text (narrative sections; any may be null) ---    spotCard,    captMikeNotes,    historicalAnalysis,    environmentalFactors,    observationalFactors,    structureApproach,    gearTechnique,    QAcaptMike,    // --- relationships (weak refs; dangling targets resolve to null) ---    approaches[]->{  _id,  name,  "slug": slug.current},    baitfish[]->{  _id,  name,  "slug": slug.current},    // Gear (lureCatalog) refs are weak and drafts.-prefixed, so a plain deref    // dangles for ~90% of spots. Resolve with the manual id-match deref (same    // pattern as region/structure) so the sidebar gear rail actually populates.    "lureCatalog": lureCatalog[]{      "g": *[_type == "lureCatalog" && ("drafts." + _id == ^._ref || _id == ^._ref)][0]{  _id,  name,  "slug": slug.current,  imageURL,  websiteLink}    }.g,    lureGearCategory[]->{  _id,  name,  "slug": slug.current},    microSeason[]->{  _id,  name,  "slug": slug.current},    mode[]->{  _id,  name,  "slug": slug.current},    parentLure[]->{  _id,  name,  "slug": slug.current},    region[]->{  _id,  name,  "slug": slug.current},    // Raw refs (not deref'd) so the server can build the related-videos query    // params — most deref to null (dangling), but the _ref value is matchable.    "regionRef": region[0]._ref,    "targetSpeciesRefs": targetSpecies[]._ref,    seasons[]->{  _id,  name,  "slug": slug.current},    "structureTypes": coalesce(      structureTypes[]->{  _id,  name,  "slug": slug.current},      structure[]->{  _id,  name,  "slug": slug.current}    ),    targetSpecies[]->{  _id,  name,  "slug": slug.current},    techniqueRetrieve[]->{  _id,  name,  "slug": slug.current},    zone[]->{  _id,  name,  "slug": slug.current},    relatedVideos[]->{  _id,  name,  "slug": slug.current},    boatRamps[]->{  _id,  name,  "slug": slug.current},    nearbySpots[]->{      _id,      name,      id,      "slug": slug.current,      // Coordinates power the chart's nearby markers (see lib/nearby.ts); scalar      // lat/lng, not a geopoint. Any may be null on an unmapped spot.      latitude,      longitude,      "summary": pt::text(coalesce(spotCard, captMikeNotes))    },    subSpotsFXApproaches[]->{  _id,  name,  "slug": slug.current}  }
 export type SpotBySlugQueryResult = {
   _id: string;
   _type: "spot";
@@ -1094,7 +1094,7 @@ export type SpotBySlugQueryResult = {
     slug: string | null;
     imageURL: string | null;
     websiteLink: string | null;
-  }> | null;
+  } | null> | null;
   lureGearCategory: Array<{
     _id: string;
     name: string | null;
@@ -1175,10 +1175,11 @@ export type SpotBySlugQueryResult = {
 
 // Source: lib/sanity/queries.ts
 // Variable: relatedVideosForSpotQuery
-// Query: *[_type == "video" && (    references($spotIds) ||    region._ref in $regionRefs ||    count(targetspecies[@._ref in $speciesRefs]) > 0  )]{    _id,    "title": coalesce(name, youtubeTitle),    videoID,    watchURL,    videoFilmDate,    "region": *[_type == "region" && ("drafts." + _id == ^.region._ref || _id == ^.region._ref)][0]{      name,      "slug": slug.current    },    "tier": select(      references($spotIds) => 1,      region._ref in $regionRefs => 2,      true => 3    )  } | order(tier asc, videoFilmDate desc)[0...6]
+// Query: *[_type == "video" && (    references($spotIds) ||    region._ref in $regionRefs ||    count(targetspecies[@._ref in $speciesRefs]) > 0  )]{    _id,    "title": coalesce(name, youtubeTitle),    // Slug drives the in-app video route (/videos/[slug]); the card links there    // instead of YouTube. A slugless video falls back to its watch URL.    "slug": slug.current,    videoID,    watchURL,    videoFilmDate,    "region": *[_type == "region" && ("drafts." + _id == ^.region._ref || _id == ^.region._ref)][0]{      name,      "slug": slug.current    },    "tier": select(      references($spotIds) => 1,      region._ref in $regionRefs => 2,      true => 3    )  } | order(tier asc, videoFilmDate desc)[0...6]
 export type RelatedVideosForSpotQueryResult = Array<{
   _id: string;
   title: string | null;
+  slug: string | null;
   videoID: string | null;
   watchURL: string | null;
   videoFilmDate: string | null;
@@ -1188,6 +1189,78 @@ export type RelatedVideosForSpotQueryResult = Array<{
   } | null;
   tier: 1 | 2 | 3;
 }>;
+
+// Source: lib/sanity/queries.ts
+// Variable: videosIndexQuery
+// Query: *[_type == "video" && defined(slug.current)]{    _id,    "title": coalesce(name, youtubeTitle),    "slug": slug.current,    videoID,    watchURL,    videoFilmDate,    videoCategory,    "region": *[_type == "region" && ("drafts." + _id == ^.region._ref || _id == ^.region._ref)][0]{      name,      "slug": slug.current    },    // Filter facets — resolved names via the manual drafts.-deref (plain deref    // dangles). Each drives a checkbox group in the videos filter sidebar.    "species": targetspecies[]{ "n": *[_type=="targetSpecies" && ("drafts."+_id==^._ref || _id==^._ref)][0].name }.n,    "structures": structure[]{ "n": *[_type=="structure" && ("drafts."+_id==^._ref || _id==^._ref)][0].name }.n,    "techniques": techniqueretrieve[]{ "n": *[_type=="techniqueRetrieve" && ("drafts."+_id==^._ref || _id==^._ref)][0].name }.n,    "gearCategories": lureGearCategory[]{ "n": *[_type=="lureGearCategory" && ("drafts."+_id==^._ref || _id==^._ref)][0].name }.n,    "seasons": season[]{ "n": *[_type=="season" && ("drafts."+_id==^._ref || _id==^._ref)][0].name }.n  } | order(videoFilmDate desc)
+export type VideosIndexQueryResult = Array<{
+  _id: string;
+  title: string | null;
+  slug: string | null;
+  videoID: string | null;
+  watchURL: string | null;
+  videoFilmDate: string | null;
+  videoCategory: string | null;
+  region: {
+    name: string | null;
+    slug: string | null;
+  } | null;
+  species: Array<string | null> | null;
+  structures: Array<string | null> | null;
+  techniques: Array<string | null> | null;
+  gearCategories: Array<string | null> | null;
+  seasons: Array<string | null> | null;
+}>;
+
+// Source: lib/sanity/queries.ts
+// Variable: allVideoSlugsQuery
+// Query: *[_type == "video" && defined(slug.current)]{ "slug": slug.current }
+export type AllVideoSlugsQueryResult = Array<{
+  slug: string | null;
+}>;
+
+// Source: lib/sanity/queries.ts
+// Variable: videoMetaBySlugQuery
+// Query: *[_type == "video" && slug.current == $slug][0]{    "title": coalesce(name, youtubeTitle),    "excerpt": pt::text(description)  }
+export type VideoMetaBySlugQueryResult = {
+  title: string | null;
+  excerpt: string;
+} | null;
+
+// Source: lib/sanity/queries.ts
+// Variable: videoBySlugQuery
+// Query: *[_type == "video" && slug.current == $slug][0]{    _id,    _type,    "title": coalesce(name, youtubeTitle),    "slug": slug.current,    videoID,    watchURL,    videoFilmDate,    videoCategory,    boat,    hosts,    description,    "descriptionText": pt::text(description),    "region": *[_type == "region" && ("drafts." + _id == ^.region._ref || _id == ^.region._ref)][0]{      name,      "slug": slug.current    },    "spots": spot[]{      "s": *[_type == "spot" && ("drafts." + _id == ^._ref || _id == ^._ref)][0]{        _id,        name,        "id": id,        "slug": slug.current      }    }.s,    // Gear featured in the video — same manual drafts.-deref as the spot query    // (a plain deref dangles). Drives the gear slider under the player.    "lureCatalog": lureCatalog[]{      "g": *[_type == "lureCatalog" && ("drafts." + _id == ^._ref || _id == ^._ref)][0]{  _id,  name,  "slug": slug.current,  imageURL,  websiteLink}    }.g  }
+export type VideoBySlugQueryResult = {
+  _id: string;
+  _type: "video";
+  title: string | null;
+  slug: string | null;
+  videoID: string | null;
+  watchURL: string | null;
+  videoFilmDate: string | null;
+  videoCategory: string | null;
+  boat: string | null;
+  hosts: string | null;
+  description: RichText | null;
+  descriptionText: string;
+  region: {
+    name: string | null;
+    slug: string | null;
+  } | null;
+  spots: Array<{
+    _id: string;
+    name: string | null;
+    id: string | null;
+    slug: string | null;
+  } | null> | null;
+  lureCatalog: Array<{
+    _id: string;
+    name: string | null;
+    slug: string | null;
+    imageURL: string | null;
+    websiteLink: string | null;
+  } | null> | null;
+} | null;
 
 // Source: lib/sanity/queries.ts
 // Variable: allSpotSlugsQuery
@@ -1216,6 +1289,28 @@ export type SpotsIndexQueryResult = Array<{
   summary: string;
   regionName: string | null;
   regionSlug: string | null;
+}>;
+
+// Source: lib/sanity/queries.ts
+// Variable: fsSpotsQuery
+// Query: *[_type == "spot" && spotType in ["fs-featured-spot", "br-boat-ramp", "boat-ramp", "BR - Boat Ramp"]]{    _id,    id,    name,    "slug": slug.current,    latitude,    longitude,    "kind": select(spotType == "fs-featured-spot" => "spot", "ramp"),    "summary": pt::text(coalesce(spotCard, captMikeNotes)),    "structures": structure[]{      "r": *[_type == "structure" && ("drafts." + _id == ^._ref || _id == ^._ref)][0]{        "name": name,        "slug": slug.current      }    }.r,    "species": targetSpecies[]{      "r": *[_type == "targetSpecies" && ("drafts." + _id == ^._ref || _id == ^._ref)][0]{        "name": name,        "slug": slug.current      }    }.r  } | order(name)
+export type FsSpotsQueryResult = Array<{
+  _id: string;
+  id: string | null;
+  name: string | null;
+  slug: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  kind: "ramp" | "spot";
+  summary: string;
+  structures: Array<{
+    name: string | null;
+    slug: string | null;
+  } | null> | null;
+  species: Array<{
+    name: string | null;
+    slug: string | null;
+  } | null> | null;
 }>;
 
 // Source: lib/sanity/queries.ts
@@ -1655,11 +1750,16 @@ export type SpotCardsByRegionQueryResult = Array<{
 import "@sanity/client";
 declare module "@sanity/client" {
   interface SanityQueries {
-    '\n  *[_type == "spot" && slug.current == $slug][0]{\n    // --- identity / system ---\n    _id,\n    _type,\n    _createdAt,\n    _updatedAt,\n    id,\n    name,\n    "slug": slug.current,\n\n    // --- details ---\n    spotId,\n    postType,\n    spotType,\n    version,\n    publishDate,\n    depthRange,\n    hazards,\n    approachCodePrefix,\n    approachCount,\n    microSeasons,\n\n    // --- location ---\n    latitude,\n    longitude,\n    zoomLevel,\n    macroRegion,\n    platform,\n    tideStationId,\n    currentStationId,\n    tideVariance,\n    gpxFile,\n\n    // --- content: image (resolved to URL + dimensions in the projection) ---\n    featuredImage{\n      alt,\n      caption,\n      hotspot,\n      crop,\n      "url": asset->url,\n      "dimensions": asset->metadata.dimensions\n    },\n\n    // Plain-text description for JSON-LD / metadata (no dedicated SEO field).\n    "descriptionText": pt::text(coalesce(spotCard, captMikeNotes, historicalAnalysis, environmentalFactors)),\n\n    // --- content: portable text (narrative sections; any may be null) ---\n    spotCard,\n    captMikeNotes,\n    historicalAnalysis,\n    environmentalFactors,\n    observationalFactors,\n    structureApproach,\n    gearTechnique,\n    QAcaptMike,\n\n    // --- relationships (weak refs; dangling targets resolve to null) ---\n    approaches[]->{\n  _id,\n  name,\n  "slug": slug.current\n},\n    baitfish[]->{\n  _id,\n  name,\n  "slug": slug.current\n},\n    lureCatalog[]->{\n  _id,\n  name,\n  "slug": slug.current,\n  imageURL,\n  websiteLink\n},\n    lureGearCategory[]->{\n  _id,\n  name,\n  "slug": slug.current\n},\n    microSeason[]->{\n  _id,\n  name,\n  "slug": slug.current\n},\n    mode[]->{\n  _id,\n  name,\n  "slug": slug.current\n},\n    parentLure[]->{\n  _id,\n  name,\n  "slug": slug.current\n},\n    region[]->{\n  _id,\n  name,\n  "slug": slug.current\n},\n    // Raw refs (not deref\'d) so the server can build the related-videos query\n    // params \u2014 most deref to null (dangling), but the _ref value is matchable.\n    "regionRef": region[0]._ref,\n    "targetSpeciesRefs": targetSpecies[]._ref,\n    seasons[]->{\n  _id,\n  name,\n  "slug": slug.current\n},\n    "structureTypes": coalesce(\n      structureTypes[]->{\n  _id,\n  name,\n  "slug": slug.current\n},\n      structure[]->{\n  _id,\n  name,\n  "slug": slug.current\n}\n    ),\n    targetSpecies[]->{\n  _id,\n  name,\n  "slug": slug.current\n},\n    techniqueRetrieve[]->{\n  _id,\n  name,\n  "slug": slug.current\n},\n    zone[]->{\n  _id,\n  name,\n  "slug": slug.current\n},\n    relatedVideos[]->{\n  _id,\n  name,\n  "slug": slug.current\n},\n    boatRamps[]->{\n  _id,\n  name,\n  "slug": slug.current\n},\n    nearbySpots[]->{\n      _id,\n      name,\n      id,\n      "slug": slug.current,\n      // Coordinates power the chart\'s nearby markers (see lib/nearby.ts); scalar\n      // lat/lng, not a geopoint. Any may be null on an unmapped spot.\n      latitude,\n      longitude,\n      "summary": pt::text(coalesce(spotCard, captMikeNotes))\n    },\n    subSpotsFXApproaches[]->{\n  _id,\n  name,\n  "slug": slug.current\n}\n  }\n': SpotBySlugQueryResult;
-    '\n  *[_type == "video" && (\n    references($spotIds) ||\n    region._ref in $regionRefs ||\n    count(targetspecies[@._ref in $speciesRefs]) > 0\n  )]{\n    _id,\n    "title": coalesce(name, youtubeTitle),\n    videoID,\n    watchURL,\n    videoFilmDate,\n    "region": *[_type == "region" && ("drafts." + _id == ^.region._ref || _id == ^.region._ref)][0]{\n      name,\n      "slug": slug.current\n    },\n    "tier": select(\n      references($spotIds) => 1,\n      region._ref in $regionRefs => 2,\n      true => 3\n    )\n  } | order(tier asc, videoFilmDate desc)[0...6]\n': RelatedVideosForSpotQueryResult;
+    '\n  *[_type == "spot" && slug.current == $slug][0]{\n    // --- identity / system ---\n    _id,\n    _type,\n    _createdAt,\n    _updatedAt,\n    id,\n    name,\n    "slug": slug.current,\n\n    // --- details ---\n    spotId,\n    postType,\n    spotType,\n    version,\n    publishDate,\n    depthRange,\n    hazards,\n    approachCodePrefix,\n    approachCount,\n    microSeasons,\n\n    // --- location ---\n    latitude,\n    longitude,\n    zoomLevel,\n    macroRegion,\n    platform,\n    tideStationId,\n    currentStationId,\n    tideVariance,\n    gpxFile,\n\n    // --- content: image (resolved to URL + dimensions in the projection) ---\n    featuredImage{\n      alt,\n      caption,\n      hotspot,\n      crop,\n      "url": asset->url,\n      "dimensions": asset->metadata.dimensions\n    },\n\n    // Plain-text description for JSON-LD / metadata (no dedicated SEO field).\n    "descriptionText": pt::text(coalesce(spotCard, captMikeNotes, historicalAnalysis, environmentalFactors)),\n\n    // --- content: portable text (narrative sections; any may be null) ---\n    spotCard,\n    captMikeNotes,\n    historicalAnalysis,\n    environmentalFactors,\n    observationalFactors,\n    structureApproach,\n    gearTechnique,\n    QAcaptMike,\n\n    // --- relationships (weak refs; dangling targets resolve to null) ---\n    approaches[]->{\n  _id,\n  name,\n  "slug": slug.current\n},\n    baitfish[]->{\n  _id,\n  name,\n  "slug": slug.current\n},\n    // Gear (lureCatalog) refs are weak and drafts.-prefixed, so a plain deref\n    // dangles for ~90% of spots. Resolve with the manual id-match deref (same\n    // pattern as region/structure) so the sidebar gear rail actually populates.\n    "lureCatalog": lureCatalog[]{\n      "g": *[_type == "lureCatalog" && ("drafts." + _id == ^._ref || _id == ^._ref)][0]{\n  _id,\n  name,\n  "slug": slug.current,\n  imageURL,\n  websiteLink\n}\n    }.g,\n    lureGearCategory[]->{\n  _id,\n  name,\n  "slug": slug.current\n},\n    microSeason[]->{\n  _id,\n  name,\n  "slug": slug.current\n},\n    mode[]->{\n  _id,\n  name,\n  "slug": slug.current\n},\n    parentLure[]->{\n  _id,\n  name,\n  "slug": slug.current\n},\n    region[]->{\n  _id,\n  name,\n  "slug": slug.current\n},\n    // Raw refs (not deref\'d) so the server can build the related-videos query\n    // params \u2014 most deref to null (dangling), but the _ref value is matchable.\n    "regionRef": region[0]._ref,\n    "targetSpeciesRefs": targetSpecies[]._ref,\n    seasons[]->{\n  _id,\n  name,\n  "slug": slug.current\n},\n    "structureTypes": coalesce(\n      structureTypes[]->{\n  _id,\n  name,\n  "slug": slug.current\n},\n      structure[]->{\n  _id,\n  name,\n  "slug": slug.current\n}\n    ),\n    targetSpecies[]->{\n  _id,\n  name,\n  "slug": slug.current\n},\n    techniqueRetrieve[]->{\n  _id,\n  name,\n  "slug": slug.current\n},\n    zone[]->{\n  _id,\n  name,\n  "slug": slug.current\n},\n    relatedVideos[]->{\n  _id,\n  name,\n  "slug": slug.current\n},\n    boatRamps[]->{\n  _id,\n  name,\n  "slug": slug.current\n},\n    nearbySpots[]->{\n      _id,\n      name,\n      id,\n      "slug": slug.current,\n      // Coordinates power the chart\'s nearby markers (see lib/nearby.ts); scalar\n      // lat/lng, not a geopoint. Any may be null on an unmapped spot.\n      latitude,\n      longitude,\n      "summary": pt::text(coalesce(spotCard, captMikeNotes))\n    },\n    subSpotsFXApproaches[]->{\n  _id,\n  name,\n  "slug": slug.current\n}\n  }\n': SpotBySlugQueryResult;
+    '\n  *[_type == "video" && (\n    references($spotIds) ||\n    region._ref in $regionRefs ||\n    count(targetspecies[@._ref in $speciesRefs]) > 0\n  )]{\n    _id,\n    "title": coalesce(name, youtubeTitle),\n    // Slug drives the in-app video route (/videos/[slug]); the card links there\n    // instead of YouTube. A slugless video falls back to its watch URL.\n    "slug": slug.current,\n    videoID,\n    watchURL,\n    videoFilmDate,\n    "region": *[_type == "region" && ("drafts." + _id == ^.region._ref || _id == ^.region._ref)][0]{\n      name,\n      "slug": slug.current\n    },\n    "tier": select(\n      references($spotIds) => 1,\n      region._ref in $regionRefs => 2,\n      true => 3\n    )\n  } | order(tier asc, videoFilmDate desc)[0...6]\n': RelatedVideosForSpotQueryResult;
+    '\n  *[_type == "video" && defined(slug.current)]{\n    _id,\n    "title": coalesce(name, youtubeTitle),\n    "slug": slug.current,\n    videoID,\n    watchURL,\n    videoFilmDate,\n    videoCategory,\n    "region": *[_type == "region" && ("drafts." + _id == ^.region._ref || _id == ^.region._ref)][0]{\n      name,\n      "slug": slug.current\n    },\n    // Filter facets \u2014 resolved names via the manual drafts.-deref (plain deref\n    // dangles). Each drives a checkbox group in the videos filter sidebar.\n    "species": targetspecies[]{ "n": *[_type=="targetSpecies" && ("drafts."+_id==^._ref || _id==^._ref)][0].name }.n,\n    "structures": structure[]{ "n": *[_type=="structure" && ("drafts."+_id==^._ref || _id==^._ref)][0].name }.n,\n    "techniques": techniqueretrieve[]{ "n": *[_type=="techniqueRetrieve" && ("drafts."+_id==^._ref || _id==^._ref)][0].name }.n,\n    "gearCategories": lureGearCategory[]{ "n": *[_type=="lureGearCategory" && ("drafts."+_id==^._ref || _id==^._ref)][0].name }.n,\n    "seasons": season[]{ "n": *[_type=="season" && ("drafts."+_id==^._ref || _id==^._ref)][0].name }.n\n  } | order(videoFilmDate desc)\n': VideosIndexQueryResult;
+    '\n  *[_type == "video" && defined(slug.current)]{ "slug": slug.current }\n': AllVideoSlugsQueryResult;
+    '\n  *[_type == "video" && slug.current == $slug][0]{\n    "title": coalesce(name, youtubeTitle),\n    "excerpt": pt::text(description)\n  }\n': VideoMetaBySlugQueryResult;
+    '\n  *[_type == "video" && slug.current == $slug][0]{\n    _id,\n    _type,\n    "title": coalesce(name, youtubeTitle),\n    "slug": slug.current,\n    videoID,\n    watchURL,\n    videoFilmDate,\n    videoCategory,\n    boat,\n    hosts,\n    description,\n    "descriptionText": pt::text(description),\n    "region": *[_type == "region" && ("drafts." + _id == ^.region._ref || _id == ^.region._ref)][0]{\n      name,\n      "slug": slug.current\n    },\n    "spots": spot[]{\n      "s": *[_type == "spot" && ("drafts." + _id == ^._ref || _id == ^._ref)][0]{\n        _id,\n        name,\n        "id": id,\n        "slug": slug.current\n      }\n    }.s,\n    // Gear featured in the video \u2014 same manual drafts.-deref as the spot query\n    // (a plain deref dangles). Drives the gear slider under the player.\n    "lureCatalog": lureCatalog[]{\n      "g": *[_type == "lureCatalog" && ("drafts." + _id == ^._ref || _id == ^._ref)][0]{\n  _id,\n  name,\n  "slug": slug.current,\n  imageURL,\n  websiteLink\n}\n    }.g\n  }\n': VideoBySlugQueryResult;
     '\n  *[_type == "spot" && defined(slug.current)]{\n    "slug": slug.current,\n    id\n  }\n': AllSpotSlugsQueryResult;
     '\n  *[_type == "spot" && slug.current == $slug][0]{\n    name,\n    "excerpt": pt::text(coalesce(spotCard, captMikeNotes, historicalAnalysis, environmentalFactors))\n  }\n': SpotMetaBySlugQueryResult;
     '\n  *[_type == "spot" && defined(slug.current)]{\n    \n  _id,\n  name,\n  id,\n  "slug": slug.current,\n  "summary": pt::text(coalesce(spotCard, captMikeNotes))\n,\n    "regionName": region[0]->name,\n    "regionSlug": region[0]->slug.current\n  } | order(name)\n': SpotsIndexQueryResult;
+    '\n  *[_type == "spot" && spotType in ["fs-featured-spot", "br-boat-ramp", "boat-ramp", "BR - Boat Ramp"]]{\n    _id,\n    id,\n    name,\n    "slug": slug.current,\n    latitude,\n    longitude,\n    "kind": select(spotType == "fs-featured-spot" => "spot", "ramp"),\n    "summary": pt::text(coalesce(spotCard, captMikeNotes)),\n    "structures": structure[]{\n      "r": *[_type == "structure" && ("drafts." + _id == ^._ref || _id == ^._ref)][0]{\n        "name": name,\n        "slug": slug.current\n      }\n    }.r,\n    "species": targetSpecies[]{\n      "r": *[_type == "targetSpecies" && ("drafts." + _id == ^._ref || _id == ^._ref)][0]{\n        "name": name,\n        "slug": slug.current\n      }\n    }.r\n  } | order(name)\n': FsSpotsQueryResult;
     '\n  *[_type in $types && defined(slug.current)]{ "slug": slug.current }\n': TaxonomySlugsQueryResult;
     '\n  *[_type in $types && defined(slug.current)]{\n    _id,\n    name,\n    id,\n    "slug": slug.current\n  } | order(name)\n': TaxonomyIndexQueryResult;
     '\n  *[_type in $types && slug.current == $slug][0]{\n    _id,\n    _type,\n    name,\n    id,\n    "slug": slug.current,\n    description,\n    "descriptionText": pt::text(description)\n  }\n': TaxonomyDocBySlugQueryResult;

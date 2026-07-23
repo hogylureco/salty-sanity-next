@@ -1,7 +1,8 @@
 /**
- * Video helpers. The `video` schema has NO thumbnail asset and NO route (Phase 4
- * excluded it), so thumbnails are derived from the YouTube id and cards link out
- * to YouTube. Kept pure/presentational so VideoCard stays data-source-agnostic.
+ * Video helpers. The `video` schema has NO thumbnail asset, so thumbnails are
+ * derived from the YouTube id. Videos DO have slugs and their own in-app route
+ * (/videos/[slug]); `videoHref` remains the outbound YouTube link used by the
+ * embed and the "Watch on YouTube" affordance. Kept pure/presentational.
  */
 
 const MONTHS = [
@@ -33,4 +34,28 @@ export function videoHref(
   if (watchURL) return watchURL
   if (videoID) return `https://www.youtube.com/watch?v=${videoID}`
   return null
+}
+
+/**
+ * Display label for the free-form `videoCategory` string. The data holds a few
+ * inconsistent raw values (`saltycapetv`, `howtovideo`, `hogylurecompany` and
+ * `hogy-lure-company`); map the known ones, and title-case anything unknown so a
+ * new value never renders as a raw slug. Null/empty → null (caller drops it).
+ */
+export function formatVideoCategory(
+  raw: string | null | undefined,
+): string | null {
+  if (!raw) return null
+  const key = raw.toLowerCase().replace(/[-_\s]/g, '')
+  const known: Record<string, string> = {
+    saltycapetv: 'Salty Cape TV',
+    howtovideo: 'How-To',
+    hogylurecompany: 'Hogy Lure Company',
+  }
+  if (known[key]) return known[key]
+  return raw
+    .split(/[-_\s]+/)
+    .filter(Boolean)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ')
 }

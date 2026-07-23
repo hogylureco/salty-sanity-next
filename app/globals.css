@@ -71,3 +71,22 @@ body {
     box-shadow: 0 2px 4px rgb(0 0 0 / 0.06);
   }
 }
+
+/*
+ * Permanent map labels (SpotMap markers). Leaflet's default tooltip paints its
+ * own white box + arrow; we strip that so the chip built in SpotMap is the only
+ * visible plate. `.leaflet-tooltip.spot-label` (two classes) outspecifies
+ * Leaflet's `.leaflet-tooltip` regardless of stylesheet order.
+ */
+.leaflet-tooltip.spot-label {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  padding: 0;
+  white-space: nowrap;
+}
+
+/* No tooltip arrow — it clutters over dense chart symbology. */
+.leaflet-tooltip.spot-label::before {
+  display: none;
+}

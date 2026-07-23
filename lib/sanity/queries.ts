@@ -95,7 +95,12 @@ export const spotBySlugQuery = defineQuery(/* groq */ `
     // --- relationships (weak refs; dangling targets resolve to null) ---
     approaches[]->${refProjection},
     baitfish[]->${refProjection},
-    lureCatalog[]->${gearProjection},
+    // Gear (lureCatalog) refs are weak and drafts.-prefixed, so a plain deref
+    // dangles for ~90% of spots. Resolve with the manual id-match deref (same
+    // pattern as region/structure) so the sidebar gear rail actually populates.
+    "lureCatalog": lureCatalog[]{
+      "g": *[_type == "lureCatalog" && ("drafts." + _id == ^._ref || _id == ^._ref)][0]${gearProjection}
+    }.g,
     lureGearCategory[]->${refProjection},
     microSeason[]->${refProjection},
     mode[]->${refProjection},
@@ -120,6 +125,10 @@ export const spotBySlugQuery = defineQuery(/* groq */ `
       name,
       id,
       "slug": slug.current,
+      // Coordinates power the chart's nearby markers (see lib/nearby.ts); scalar
+      // lat/lng, not a geopoint. Any may be null on an unmapped spot.
+      latitude,
+      longitude,
       "summary": pt::text(coalesce(spotCard, captMikeNotes))
     },
     subSpotsFXApproaches[]->${refProjection}
@@ -147,6 +156,9 @@ export const relatedVideosForSpotQuery = defineQuery(/* groq */ `
   )]{
     _id,
     "title": coalesce(name, youtubeTitle),
+    // Slug drives the in-app video route (/videos/[slug]); the card links there
+    // instead of YouTube. A slugless video falls back to its watch URL.
+    "slug": slug.current,
     videoID,
     watchURL,
     videoFilmDate,
@@ -160,6 +172,87 @@ export const relatedVideosForSpotQuery = defineQuery(/* groq */ `
       true => 3
     )
   } | order(tier asc, videoFilmDate desc)[0...6]
+`)
+
+/**
+ * Every video for the /videos index — newest first. Slug-gated (a slugless video
+ * has no route). Region resolved via the manual `drafts.`-prefix deref (same as
+ * the related-videos query) so a dangling region ref still yields a label + link.
+ */
+export const videosIndexQuery = defineQuery(/* groq */ `
+  *[_type == "video" && defined(slug.current)]{
+    _id,
+    "title": coalesce(name, youtubeTitle),
+    "slug": slug.current,
+    videoID,
+    watchURL,
+    videoFilmDate,
+    videoCategory,
+    "region": *[_type == "region" && ("drafts." + _id == ^.region._ref || _id == ^.region._ref)][0]{
+      name,
+      "slug": slug.current
+    },
+    // Filter facets — resolved names via the manual drafts.-deref (plain deref
+    // dangles). Each drives a checkbox group in the videos filter sidebar.
+    "species": targetspecies[]{ "n": *[_type=="targetSpecies" && ("drafts."+_id==^._ref || _id==^._ref)][0].name }.n,
+    "structures": structure[]{ "n": *[_type=="structure" && ("drafts."+_id==^._ref || _id==^._ref)][0].name }.n,
+    "techniques": techniqueretrieve[]{ "n": *[_type=="techniqueRetrieve" && ("drafts."+_id==^._ref || _id==^._ref)][0].name }.n,
+    "gearCategories": lureGearCategory[]{ "n": *[_type=="lureGearCategory" && ("drafts."+_id==^._ref || _id==^._ref)][0].name }.n,
+    "seasons": season[]{ "n": *[_type=="season" && ("drafts."+_id==^._ref || _id==^._ref)][0].name }.n
+  } | order(videoFilmDate desc)
+`)
+
+/** Slugs for the video detail route's `generateStaticParams`. */
+export const allVideoSlugsQuery = defineQuery(/* groq */ `
+  *[_type == "video" && defined(slug.current)]{ "slug": slug.current }
+`)
+
+/** Lean projection for the video detail's `generateMetadata`. */
+export const videoMetaBySlugQuery = defineQuery(/* groq */ `
+  *[_type == "video" && slug.current == $slug][0]{
+    "title": coalesce(name, youtubeTitle),
+    "excerpt": pt::text(description)
+  }
+`)
+
+/**
+ * Full detail projection for a single video, keyed by slug. Region and featured
+ * spots are resolved with the manual `drafts.`-prefix deref (the weak refs store
+ * `drafts.`-prefixed ids a plain `->` can't resolve); each is null-guarded, and a
+ * dangling ref simply drops out.
+ */
+export const videoBySlugQuery = defineQuery(/* groq */ `
+  *[_type == "video" && slug.current == $slug][0]{
+    _id,
+    _type,
+    "title": coalesce(name, youtubeTitle),
+    "slug": slug.current,
+    videoID,
+    watchURL,
+    videoFilmDate,
+    videoCategory,
+    boat,
+    hosts,
+    description,
+    "descriptionText": pt::text(description),
+    "region": *[_type == "region" && ("drafts." + _id == ^.region._ref || _id == ^.region._ref)][0]{
+      name,
+      "slug": slug.current
+    },
+    "spots": spot[]{
+      "s": *[_type == "spot" && ("drafts." + _id == ^._ref || _id == ^._ref)][0]{
+        _id,
+        name,
+        "id": id,
+        "slug": slug.current
+      }
+    }.s,
+    // Gear featured in the video — same manual drafts.-deref as the spot query
+    // (a plain deref dangles). Drives the gear slider under the player.
+    "lureCatalog": lureCatalog[]{
+      "g": *[_type == "lureCatalog" && ("drafts." + _id == ^._ref || _id == ^._ref)][0]${gearProjection}
+    }.g
+  }
 `)
 
 /**
@@ -208,6 +301,43 @@ export const spotsIndexQuery = defineQuery(/* groq */ `
     ${spotCardProjection},
     "regionName": region[0]->name,
     "regionSlug": region[0]->slug.current
+  } | order(name)
+`)
+
+/**
+ * Featured spots (+ boat ramps) for the /spots overview map and filterable grid.
+ *
+ * - `kind` splits featured spots ("spot") from the boat-ramp variants ("ramp");
+ *   the data stores boat ramps under three inconsistent spotType values.
+ * - `structures`/`species` are resolved with the manual `drafts.`-prefix deref
+ *   (a plain `->` dangles on every one), each null-guarded — they drive the
+ *   grid's structure/species filters. Region is derived from the id-prefix in
+ *   the page (lib/taxonomy), not from the (dangling) region ref.
+ * - Excludes `fx-spot-playbook-approach` sub-spots. Coordinates/slug may be null
+ *   (map needs coords; grid cards need a slug) — the page filters accordingly.
+ */
+export const fsSpotsQuery = defineQuery(/* groq */ `
+  *[_type == "spot" && spotType in ["fs-featured-spot", "br-boat-ramp", "boat-ramp", "BR - Boat Ramp"]]{
+    _id,
+    id,
+    name,
+    "slug": slug.current,
+    latitude,
+    longitude,
+    "kind": select(spotType == "fs-featured-spot" => "spot", "ramp"),
+    "summary": pt::text(coalesce(spotCard, captMikeNotes)),
+    "structures": structure[]{
+      "r": *[_type == "structure" && ("drafts." + _id == ^._ref || _id == ^._ref)][0]{
+        "name": name,
+        "slug": slug.current
+      }
+    }.r,
+    "species": targetSpecies[]{
+      "r": *[_type == "targetSpecies" && ("drafts." + _id == ^._ref || _id == ^._ref)][0]{
+        "name": name,
+        "slug": slug.current
+      }
+    }.r
   } | order(name)
 `)
 

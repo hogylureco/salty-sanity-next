@@ -2,10 +2,11 @@ import Link from 'next/link'
 
 /**
  * Pure presentational video card. No data fetching — the page derives thumbnail
- * / href / formatted date and passes them in. Whole card links out to YouTube
- * (videos have no in-app route); the region link sits above the card link so it
- * navigates to the region instead. Sparse data (e.g. no date) drops the piece
- * AND its separator cleanly — never "undefined" or a dangling "·".
+ * / href / formatted date and passes them in. The whole card links to the video's
+ * in-app page (/videos/[slug]) by default; pass `external` for the YouTube
+ * fallback used only when a video has no slug. The region link sits above the
+ * card link so it navigates to the region instead. Sparse data (e.g. no date)
+ * drops the piece AND its separator cleanly — never "undefined" or a dangling "·".
  */
 export interface VideoCardProps {
   title: string
@@ -14,6 +15,8 @@ export interface VideoCardProps {
   regionSlug?: string | null
   thumbnailUrl: string | null
   href: string
+  /** External (YouTube) link → new tab; internal (video page) → soft nav. */
+  external?: boolean
 }
 
 function CameraIcon() {
@@ -63,6 +66,7 @@ export function VideoCard({
   regionSlug,
   thumbnailUrl,
   href,
+  external = false,
 }: VideoCardProps) {
   const hasDate = Boolean(date)
   const hasRegion = Boolean(regionName)
@@ -134,16 +138,23 @@ export function VideoCard({
         </h3>
       </div>
 
-      {/* Stretched card link (external). z-10 under the region link's z-20. */}
-      <a
-        href={href}
-        target="_blank"
-        rel="noopener noreferrer"
-        aria-label={title}
-        className="absolute inset-0 z-10"
-      >
-        <span className="sr-only">{title}</span>
-      </a>
+      {/* Stretched card link. z-10 under the region link's z-20. Internal → a soft
+          nav to the video page; external → YouTube in a new tab (slugless fallback). */}
+      {external ? (
+        <a
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={title}
+          className="absolute inset-0 z-10"
+        >
+          <span className="sr-only">{title}</span>
+        </a>
+      ) : (
+        <Link href={href} aria-label={title} className="absolute inset-0 z-10">
+          <span className="sr-only">{title}</span>
+        </Link>
+      )}
     </article>
   )
 }

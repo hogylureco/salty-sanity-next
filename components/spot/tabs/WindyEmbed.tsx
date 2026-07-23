@@ -13,6 +13,9 @@ export interface WindyEmbedProps {
   name?: string | null
 }
 
+const eyebrow =
+  'font-mono text-sm font-semibold uppercase tracking-wider text-header'
+
 export function WindyEmbed({ lat, lng, zoom = 8, name }: WindyEmbedProps) {
   if (typeof lat !== 'number' || typeof lng !== 'number') return null
 
@@ -39,14 +42,25 @@ export function WindyEmbed({ lat, lng, zoom = 8, name }: WindyEmbedProps) {
   const src = `https://embed.windy.com/embed2.html?${params.toString()}`
 
   return (
-    <div className="box overflow-hidden p-0">
-      <iframe
-        title={`Windy weather map for ${name ?? 'this spot'}`}
-        src={src}
-        loading="lazy"
-        className="block h-[450px] w-full"
-        style={{ border: 0 }}
-      />
+    <div className="box">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <h2 className={eyebrow}>Wind &amp; Weather</h2>
+      </div>
+      <hr className="my-3 border-body" />
+
+      <div className="overflow-hidden rounded-[5px] border border-body">
+        <iframe
+          title={`Windy weather map for ${name ?? 'this spot'}`}
+          src={src}
+          loading="lazy"
+          className="block h-[450px] w-full"
+          style={{ border: 0 }}
+        />
+      </div>
+
+      <p className="mt-4 font-mono text-[0.7rem] uppercase tracking-wide text-header/60">
+        Wind &amp; weather from Windy.com
+      </p>
     </div>
   )
 }

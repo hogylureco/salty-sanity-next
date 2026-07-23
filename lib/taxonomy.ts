@@ -85,6 +85,15 @@ export function regionForSpot(
   return UNKNOWN_REGION
 }
 
+/** Canonical region name for a slug (reverse of the curated prefix map), or null
+ *  when the slug isn't a known region. */
+export function regionNameForSlug(slug: string): string | null {
+  for (const r of Object.values(REGION_BY_PREFIX)) {
+    if (r.slug === slug) return r.name
+  }
+  return null
+}
+
 /** Both id forms for a reverse `references()` lookup (plain + `drafts.`-prefixed). */
 export function bothIdForms(id: string): string[] {
   const plain = id.startsWith('drafts.') ? id.slice('drafts.'.length) : id

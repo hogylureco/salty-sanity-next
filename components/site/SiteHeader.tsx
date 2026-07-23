@@ -7,6 +7,7 @@ import Link from 'next/link'
  */
 const NAV_LINKS: Array<{ label: string; href: string }> = [
   { label: 'Spots', href: '/spots' },
+  { label: 'Videos', href: '/videos' },
   { label: 'Species', href: '/species' },
   { label: 'Regions', href: '/regions' },
   { label: 'Gear', href: '/gear' },

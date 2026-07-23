@@ -21,35 +21,45 @@ export function SpotToc({ entries }: { entries: TocEntry[] }) {
       .filter((el): el is HTMLElement => el != null)
     if (els.length === 0) return
 
-    // Track each observed heading's viewport top; the active entry is whichever
-    // intersecting element sits closest to the top of the scroll band.
-    const tops = new Map<string, number>()
-    const observer = new IntersectionObserver(
-      (records) => {
-        for (const r of records) {
-          if (r.isIntersecting) tops.set(r.target.id, r.boundingClientRect.top)
-          else tops.delete(r.target.id)
-        }
-        let best: string | null = null
-        let bestTop = Infinity
-        for (const [id, top] of tops) {
-          if (top < bestTop) {
-            bestTop = top
-            best = id
-          }
-        }
-        if (best) setActive(best)
-      },
-      { rootMargin: '-80px 0px -60% 0px', threshold: 0 },
-    )
-    els.forEach((el) => observer.observe(el))
-    return () => observer.disconnect()
+    // Active = the last heading whose top has scrolled above the "active line"
+    // (just under the sticky site header). Computed from LIVE positions on each
+    // scroll frame, so it advances monotonically through the headings in document
+    // order and never oscillates between two of them — the stale-position compare
+    // in the old IntersectionObserver was what flickered the rail (and its subs)
+    // near section boundaries. `els` is already in document order (entry, then its
+    // subs, then the next entry), matching the scroll order.
+    const ACTIVE_LINE = 120 // ~ sticky header height (scroll-mt-28 = 112px) + gap
+
+    let frame = 0
+    const update = () => {
+      frame = 0
+      let current = els[0].id
+      for (const el of els) {
+        if (el.getBoundingClientRect().top <= ACTIVE_LINE) current = el.id
+        else break
+      }
+      setActive((prev) => (prev === current ? prev : current))
+    }
+    // Coalesce scroll bursts into one measurement per frame (rAF) — cheap for the
+    // dozen-odd headings, and avoids layout thrash.
+    const onScroll = () => {
+      if (frame === 0) frame = requestAnimationFrame(update)
+    }
+
+    update()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    window.addEventListener('resize', onScroll)
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      window.removeEventListener('resize', onScroll)
+      if (frame) cancelAnimationFrame(frame)
+    }
   }, [entries])
 
   return (
     <nav
       aria-label="On this page"
-      className="hidden lg:block lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto"
+      className="hidden lg:block lg:sticky lg:top-28 lg:max-h-[calc(100vh-8rem)] lg:overflow-y-auto"
     >
       <p className="mb-3 font-mono text-[0.7rem] font-semibold uppercase tracking-wider text-header/70">
         On this page
@@ -70,7 +80,11 @@ export function SpotToc({ entries }: { entries: TocEntry[] }) {
               >
                 {entry.title}
               </a>
-              {entry.subs.length > 0 && (
+              {/* H3 sub-entries expand only while this H2 is the active section
+                  (you've scrolled past it and not yet reached the next H2) — i.e.
+                  `entryActive`, which is true when the H2 or one of its H3s is
+                  active. Collapsed otherwise so the rail stays scannable. */}
+              {entryActive && entry.subs.length > 0 && (
                 <ul className="space-y-0.5">
                   {entry.subs.map((sub) => (
                     <li key={sub.id}>

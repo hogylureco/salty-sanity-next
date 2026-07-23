@@ -43,25 +43,30 @@ function GearCard({ g }: { g: GearItem }) {
 }
 
 /**
- * Gear Used At This Spot. Two layouts from one component:
+ * Gear cards from one component, three layouts:
  * - `rail` (default): the right-rail teaser, capped at `max` (2–3) with a link
  *   to the full set.
  * - `grid`: the Gear tab's fuller responsive grid showing every resolved item.
- * Null-guarded; empty state when no gear refs resolve (all dangle on many spots).
+ * - `slider`: a horizontal, snap-scrolling row (e.g. under the video player).
+ * Null-guarded; empty state when no gear refs resolve. `title` overrides the
+ * heading (e.g. "Gear In This Video").
  */
 export function GearRail({
   items,
   variant = 'rail',
   max = 3,
+  title = 'Gear Used At This Spot',
 }: {
   items: Array<GearItem | null> | null
-  variant?: 'rail' | 'grid'
+  variant?: 'rail' | 'grid' | 'slider'
   max?: number
+  title?: string
 }) {
   const gear = (items ?? []).filter((g): g is GearItem => g != null)
   const isGrid = variant === 'grid'
-  const shown = isGrid ? gear : gear.slice(0, max)
-  const overflow = isGrid ? 0 : gear.length - shown.length
+  const isSlider = variant === 'slider'
+  const shown = isGrid || isSlider ? gear : gear.slice(0, max)
+  const overflow = isGrid || isSlider ? 0 : gear.length - shown.length
 
   return (
     <section aria-labelledby={`gear-${variant}`}>
@@ -69,7 +74,7 @@ export function GearRail({
         id={`gear-${variant}`}
         className="font-mono text-xs font-semibold uppercase tracking-wider text-header"
       >
-        Gear Used At This Spot
+        {title}
       </h2>
       <hr className="my-3 border-body" />
 
@@ -78,11 +83,18 @@ export function GearRail({
       ) : (
         <ul
           className={
-            isGrid ? 'grid gap-2 sm:grid-cols-2 lg:grid-cols-3' : 'space-y-2'
+            isGrid
+              ? 'grid gap-2 sm:grid-cols-2 lg:grid-cols-3'
+              : isSlider
+                ? '-mx-1 flex snap-x gap-3 overflow-x-auto px-1 pb-2'
+                : 'space-y-2'
           }
         >
           {shown.map((g) => (
-            <li key={g._id}>
+            <li
+              key={g._id}
+              className={isSlider ? 'w-56 shrink-0 snap-start' : undefined}
+            >
               <GearCard g={g} />
             </li>
           ))}
