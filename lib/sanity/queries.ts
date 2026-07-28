@@ -12,6 +12,21 @@ const refProjection = /* groq */ `{
 }`
 
 /**
+ * An Approach carries more than the identity trio: the featured route diagram
+ * (a plain ImageKit URL, not a Sanity asset) and its richText `description`,
+ * both rendered in the spot's "Approaches" body section. Superset of
+ * `refProjection`, so the same array still feeds the identity-only consumers
+ * (sidebar rail, Approach Routing chips).
+ */
+const approachProjection = /* groq */ `{
+  _id,
+  name,
+  "slug": slug.current,
+  featuredDiagramUrl,
+  description
+}`
+
+/**
  * Gear (`lureCatalog`) needs more than the identity trio to render as a card in
  * the "Gear Used At This Spot" rail: the product image and outbound link. These
  * fields live on the `lureCatalog` doc (`imageURL`, `websiteLink`).
@@ -93,7 +108,14 @@ export const spotBySlugQuery = defineQuery(/* groq */ `
     QAcaptMike,
 
     // --- relationships (weak refs; dangling targets resolve to null) ---
-    approaches[]->${refProjection},
+    // Approaches: the plain []-> deref dangles for most refs (drafts.-prefixed
+    // ids), so resolve with the manual id-match deref — same pattern as
+    // lureCatalog/region. Recovers the diagram + description for the "Approaches"
+    // body section AND fixes the sidebar rail / Approach Routing chips, which
+    // previously under-resolved.
+    "approaches": approaches[]{
+      "a": *[_type == "approach" && ("drafts." + _id == ^._ref || _id == ^._ref)][0]${approachProjection}
+    }.a,
     baitfish[]->${refProjection},
     // Gear (lureCatalog) refs are weak and drafts.-prefixed, so a plain deref
     // dangles for ~90% of spots. Resolve with the manual id-match deref (same
@@ -366,7 +388,10 @@ export const taxonomyDocBySlugQuery = defineQuery(/* groq */ `
     id,
     "slug": slug.current,
     description,
-    "descriptionText": pt::text(description)
+    "descriptionText": pt::text(description),
+    // Approach-only: the featured route diagram (plain ImageKit URL). Null for
+    // every other taxonomy type, so the template just renders it when present.
+    featuredDiagramUrl
   }
 `)
 
@@ -379,6 +404,101 @@ export const taxonomyDocBySlugQuery = defineQuery(/* groq */ `
 export const taxonomyReverseSpotsQuery = defineQuery(/* groq */ `
   *[_type == "spot" && references($ids)]{
     ${spotCardProjection}
+  } | order(name)
+`)
+
+/**
+ * --- Species posts (the /species hub + /species/posts/[slug] articles) --------
+ *
+ * `speciesPost` docs are long-form guides (avg ~6KB of body text). All refs are
+ * weak and often draft-`_ref`'d, so species/baitfish are resolved with the same
+ * manual id-match deref the spot/video queries use — a plain `->` dangles.
+ *
+ * Dangling entries come back as `null` array members (NOT dropped in-query): a
+ * trailing `[defined(@)]` filter looks right but silently nulls EVERY element in
+ * this projection, so each consumer null-guards the members in JS instead.
+ */
+
+/** Card excerpt: first ~45 words of the flattened body. GROQ can't slice a
+ *  string directly (`[0...n]` only slices arrays), so split on spaces, slice the
+ *  word array, and re-join. */
+const postExcerpt = /* groq */ `array::join(string::split(pt::text(description), " ")[0...45], " ")`
+
+const postSpeciesDeref = /* groq */ `targetSpecies[]{
+  "r": *[_type == "targetSpecies" && ("drafts." + _id == ^._ref || _id == ^._ref)][0]{
+    "name": name, "slug": slug.current
+  }
+}.r`
+
+const postBaitfishDeref = /* groq */ `baitfish[]{
+  "r": *[_type == "baitfish" && ("drafts." + _id == ^._ref || _id == ^._ref)][0]{
+    "name": name, "slug": slug.current
+  }
+}.r`
+
+/** Landing grid: every species post, with resolved facet names for the sidebar. */
+export const speciesPostsIndexQuery = defineQuery(/* groq */ `
+  *[_type == "speciesPost" && defined(slug.current)]{
+    _id,
+    _type,
+    name,
+    "slug": slug.current,
+    "excerpt": ${postExcerpt},
+    "species": ${postSpeciesDeref},
+    "baitfish": ${postBaitfishDeref}
+  } | order(name)
+`)
+
+/** Static params for the post detail route. */
+export const speciesPostSlugsQuery = defineQuery(/* groq */ `
+  *[_type == "speciesPost" && defined(slug.current)]{ "slug": slug.current }
+`)
+
+/** One species post (full article) for /species/posts/[slug]. */
+export const speciesPostBySlugQuery = defineQuery(/* groq */ `
+  *[_type == "speciesPost" && slug.current == $slug][0]{
+    _id,
+    _type,
+    name,
+    id,
+    "slug": slug.current,
+    description,
+    "descriptionText": pt::text(description),
+    "species": ${postSpeciesDeref},
+    "baitfish": ${postBaitfishDeref}
+  }
+`)
+
+/**
+ * Related posts for a species detail page. `references($ids)` matches the stored
+ * `_ref` (plain OR drafts.-prefixed — callers pass both id forms via bothIdForms).
+ */
+export const postsBySpeciesQuery = defineQuery(/* groq */ `
+  *[_type == "speciesPost" && references($ids)]{
+    _id,
+    name,
+    "slug": slug.current,
+    "excerpt": ${postExcerpt}
+  } | order(name)
+`)
+
+/**
+ * Spots tagged with a species (for the species detail map + spot cards). Matches
+ * the ref both id forms; derives the map `kind` from spotType the same way
+ * fsSpotsQuery does (anything that isn't a boat ramp is a plain spot marker).
+ */
+export const spotsBySpeciesQuery = defineQuery(/* groq */ `
+  *[_type == "spot" && references($ids)]{
+    _id,
+    id,
+    name,
+    "slug": slug.current,
+    latitude,
+    longitude,
+    "kind": select(
+      spotType in ["br-boat-ramp", "boat-ramp", "BR - Boat Ramp"] => "ramp",
+      "spot"
+    )
   } | order(name)
 `)
 
@@ -413,4 +533,78 @@ export const spotCardsByRegionQuery = defineQuery(/* groq */ `
   )]{
     ${spotCardProjection}
   } | order(name)
+`)
+
+/**
+ * Site-wide search index source (Step 1 of the instant-search feature). ONE
+ * query, one array per indexable type, resolved entirely at build time and
+ * flattened into the static `/search-index.json` artifact — NEVER queried at
+ * runtime. Only types with a reachable `[slug]` route are included; `blogPost`
+ * and `speciesPost` are omitted (no routes yet), and `structure`/`structureType`
+ * are unioned then deduped alongside every other type in `lib/search/build-index.ts`.
+ *
+ * Body text is flattened with `pt::text()` at the query layer (NOT shipped as
+ * raw PT): `pt::text` concatenates block text and ignores non-text members
+ * (richTableBlock, images, embeds) exactly as required — this shrinks the fetch
+ * from ~30MB of raw PT to ~3.4MB. That is still over Next's 2MB Data-Cache limit,
+ * so the underlying fetch is NOT data-cached (you'll see an "items over 2MB can
+ * not be cached" warning). That is fine here: the consumer route
+ * (`/search-index.json`) is `force-static`, so this query runs only at build time
+ * and on the hourly `revalidate` tick — never per request — and the flattened
+ * `body` is then stega-cleaned and hard-capped (CORPUS_CAP) in `build-index.ts`,
+ * yielding a ~480KB artifact. Video region is manual-deref'd (weak ref) the same
+ * way the videos index does.
+ */
+export const searchIndexQuery = defineQuery(/* groq */ `
+  {
+    "spots": *[_type == "spot" && defined(slug.current)]{
+      _id, _type, id, name, "slug": slug.current,
+      "body": pt::text(spotCard) + " " + pt::text(captMikeNotes) + " " +
+        pt::text(historicalAnalysis) + " " + pt::text(environmentalFactors) + " " +
+        pt::text(observationalFactors) + " " + pt::text(structureApproach) + " " +
+        pt::text(gearTechnique) + " " + pt::text(QAcaptMike)
+    },
+    "videos": *[_type == "video" && defined(slug.current)]{
+      _id, _type, id, "slug": slug.current,
+      "name": coalesce(name, youtubeTitle),
+      "body": pt::text(description),
+      "regionName": *[_type == "region" && ("drafts." + _id == ^.region._ref || _id == ^.region._ref)][0].name
+    },
+    "approaches": *[_type == "approach" && defined(slug.current)]{
+      _id, _type, id, name, "slug": slug.current, "body": pt::text(description)
+    },
+    "structures": *[_type in ["structure", "structureType"] && defined(slug.current)]{
+      _id, _type, id, name, "slug": slug.current, "body": pt::text(description)
+    },
+    "techniques": *[_type == "techniqueRetrieve" && defined(slug.current)]{
+      _id, _type, id, name, "slug": slug.current, "body": pt::text(description)
+    },
+    "baitfish": *[_type == "baitfish" && defined(slug.current)]{
+      _id, _type, id, name, "slug": slug.current, "body": pt::text(description)
+    },
+    "species": *[_type == "targetSpecies" && defined(slug.current)]{
+      _id, _type, id, name, "slug": slug.current, "body": pt::text(description)
+    },
+    "gearPosts": *[_type == "gearPost" && defined(slug.current)]{
+      _id, _type, id, name, "slug": slug.current, "body": pt::text(description)
+    },
+    "lures": *[_type == "lureCatalog" && defined(slug.current)]{
+      _id, _type, id, name, "slug": slug.current, "body": pt::text(description)
+    },
+    "parentLures": *[_type == "parentLure" && defined(slug.current)]{
+      _id, _type, id, name, "slug": slug.current, "body": pt::text(description)
+    },
+    "regions": *[_type == "region" && defined(slug.current)]{
+      _id, _type, id, name, "slug": slug.current, "body": pt::text(description)
+    },
+    "seasons": *[_type == "season" && defined(slug.current)]{
+      _id, _type, id, name, "slug": slug.current, "body": pt::text(description)
+    },
+    "zones": *[_type == "zone" && defined(slug.current)]{
+      _id, _type, id, name, "slug": slug.current, "body": pt::text(description)
+    },
+    "microSeasons": *[_type == "microSeason" && defined(slug.current)]{
+      _id, _type, id, name, "slug": slug.current, "body": pt::text(description)
+    }
+  }
 `)

@@ -24,6 +24,7 @@ import {
   DebugTableDumps,
   type DebugDumpGroup,
 } from '@/components/spot/DebugTableDumps'
+import { SpotApproaches } from '@/components/spot/SpotApproaches'
 import { SpotPortableText } from '@/components/portable-text/SpotPortableText'
 import { SpotCard, type SpotCardData } from '@/components/SpotCard'
 import { VideoCard } from '@/components/video/VideoCard'
@@ -236,6 +237,14 @@ export default async function SpotPage({
       body: <SpotPortableText value={spot.captMikeNotes} />,
     },
     {
+      id: 'sec-approaches',
+      title: 'Approaches',
+      icon: '🗺️',
+      hasContent: resolved(spot.approaches).length > 0,
+      subs: [],
+      body: <SpotApproaches approaches={spot.approaches} />,
+    },
+    {
       id: 'sec-seasonal-historical',
       title: 'Seasonal & Historical Analysis',
       icon: '📅',
@@ -423,7 +432,7 @@ export default async function SpotPage({
               depthRange={spot.depthRange}
               targetSpecies={spot.targetSpecies}
               baitfish={spot.baitfish}
-              structures={spot.structureTypes}
+              approaches={spot.approaches}
             />
           </div>
         </aside>

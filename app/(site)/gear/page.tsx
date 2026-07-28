@@ -3,7 +3,7 @@ import {
   generateTaxonomyIndexMetadata,
 } from '@/components/taxonomy/TaxonomyIndex'
 
-const TYPES = ['lureGearCategory']
+const TYPES = ['gearPost']
 const SEGMENT = 'gear'
 const LABEL = 'Gear'
 

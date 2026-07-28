@@ -40,6 +40,36 @@ export interface SpotsOverviewMapProps {
   markers: OverviewMarker[]
 }
 
+/** One marker on the /regions overview map — coloured by its region. */
+export interface RegionMarker {
+  /** Spot `_id` — React/Leaflet key only. */
+  id: string
+  name: string
+  /** Spot route slug, or null (no navigation). */
+  slug: string | null
+  lat: number
+  lng: number
+  /** Region slug this spot belongs to (drives colour + legend grouping). */
+  regionSlug: string
+  /** Region hex colour (from `lib/regionColors`). */
+  color: string
+}
+
+/** One legend row on the /regions overview map (also the group toggle). */
+export interface RegionLegendItem {
+  slug: string
+  name: string
+  color: string
+  /** Number of mapped (coordinate-bearing) spots in the region. */
+  count: number
+}
+
+export interface RegionsOverviewMapProps {
+  markers: RegionMarker[]
+  /** Legend rows in fixed palette order; each toggles its region on the map. */
+  legend: RegionLegendItem[]
+}
+
 export interface SpotMapProps {
   lat: number | string | null | undefined
   lng: number | string | null | undefined

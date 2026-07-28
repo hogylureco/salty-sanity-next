@@ -4,7 +4,10 @@ import {
   generateTaxonomyStaticParams,
 } from '@/components/taxonomy/TaxonomyDetail'
 
-const TYPES = ['lureGearCategory']
+// The /gear index lists `gearPost` articles, but the detail route also resolves
+// `lureGearCategory` slugs so the spot page's "Lure Gear Category" chips (and the
+// sitemap) keep working.
+const TYPES = ['gearPost', 'lureGearCategory']
 const SEGMENT = 'gear'
 const LABEL = 'Gear'
 

@@ -51,12 +51,12 @@ export function StructureSpecies({
   depthRange,
   targetSpecies,
   baitfish,
-  structures,
+  approaches,
 }: {
   depthRange: string | null
   targetSpecies: Array<RailRef | null> | null
   baitfish: Array<RailRef | null> | null
-  structures: Array<RailRef | null> | null
+  approaches: Array<RailRef | null> | null
 }) {
   return (
     <section aria-labelledby="rail-structure" className="space-y-4">
@@ -65,7 +65,7 @@ export function StructureSpecies({
           id="rail-structure"
           className="font-mono text-xs font-semibold uppercase tracking-wider text-header"
         >
-          Structure &amp; Species
+          Approaches &amp; Species
         </h2>
         <hr className="my-3 border-body" />
         <p className="font-mono text-xs font-semibold uppercase tracking-wide text-header">
@@ -76,7 +76,7 @@ export function StructureSpecies({
 
       <LinkList label="Target Species" base="/species" items={targetSpecies} />
       <LinkList label="Baitfish" base="/baitfish" items={baitfish} />
-      <LinkList label="Structure" base="/structures" items={structures} />
+      <LinkList label="Approaches" base="/approaches" items={approaches} />
     </section>
   )
 }

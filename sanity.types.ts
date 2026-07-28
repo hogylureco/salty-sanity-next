@@ -1033,7 +1033,7 @@ export type AllSanitySchemaTypes =
 
 // Source: lib/sanity/queries.ts
 // Variable: spotBySlugQuery
-// Query: *[_type == "spot" && slug.current == $slug][0]{    // --- identity / system ---    _id,    _type,    _createdAt,    _updatedAt,    id,    name,    "slug": slug.current,    // --- details ---    spotId,    postType,    spotType,    version,    publishDate,    depthRange,    hazards,    approachCodePrefix,    approachCount,    microSeasons,    // --- location ---    latitude,    longitude,    zoomLevel,    macroRegion,    platform,    tideStationId,    currentStationId,    tideVariance,    gpxFile,    // --- content: image (resolved to URL + dimensions in the projection) ---    featuredImage{      alt,      caption,      hotspot,      crop,      "url": asset->url,      "dimensions": asset->metadata.dimensions    },    // Plain-text description for JSON-LD / metadata (no dedicated SEO field).    "descriptionText": pt::text(coalesce(spotCard, captMikeNotes, historicalAnalysis, environmentalFactors)),    // --- content: portable text (narrative sections; any may be null) ---    spotCard,    captMikeNotes,    historicalAnalysis,    environmentalFactors,    observationalFactors,    structureApproach,    gearTechnique,    QAcaptMike,    // --- relationships (weak refs; dangling targets resolve to null) ---    approaches[]->{  _id,  name,  "slug": slug.current},    baitfish[]->{  _id,  name,  "slug": slug.current},    // Gear (lureCatalog) refs are weak and drafts.-prefixed, so a plain deref    // dangles for ~90% of spots. Resolve with the manual id-match deref (same    // pattern as region/structure) so the sidebar gear rail actually populates.    "lureCatalog": lureCatalog[]{      "g": *[_type == "lureCatalog" && ("drafts." + _id == ^._ref || _id == ^._ref)][0]{  _id,  name,  "slug": slug.current,  imageURL,  websiteLink}    }.g,    lureGearCategory[]->{  _id,  name,  "slug": slug.current},    microSeason[]->{  _id,  name,  "slug": slug.current},    mode[]->{  _id,  name,  "slug": slug.current},    parentLure[]->{  _id,  name,  "slug": slug.current},    region[]->{  _id,  name,  "slug": slug.current},    // Raw refs (not deref'd) so the server can build the related-videos query    // params — most deref to null (dangling), but the _ref value is matchable.    "regionRef": region[0]._ref,    "targetSpeciesRefs": targetSpecies[]._ref,    seasons[]->{  _id,  name,  "slug": slug.current},    "structureTypes": coalesce(      structureTypes[]->{  _id,  name,  "slug": slug.current},      structure[]->{  _id,  name,  "slug": slug.current}    ),    targetSpecies[]->{  _id,  name,  "slug": slug.current},    techniqueRetrieve[]->{  _id,  name,  "slug": slug.current},    zone[]->{  _id,  name,  "slug": slug.current},    relatedVideos[]->{  _id,  name,  "slug": slug.current},    boatRamps[]->{  _id,  name,  "slug": slug.current},    nearbySpots[]->{      _id,      name,      id,      "slug": slug.current,      // Coordinates power the chart's nearby markers (see lib/nearby.ts); scalar      // lat/lng, not a geopoint. Any may be null on an unmapped spot.      latitude,      longitude,      "summary": pt::text(coalesce(spotCard, captMikeNotes))    },    subSpotsFXApproaches[]->{  _id,  name,  "slug": slug.current}  }
+// Query: *[_type == "spot" && slug.current == $slug][0]{    // --- identity / system ---    _id,    _type,    _createdAt,    _updatedAt,    id,    name,    "slug": slug.current,    // --- details ---    spotId,    postType,    spotType,    version,    publishDate,    depthRange,    hazards,    approachCodePrefix,    approachCount,    microSeasons,    // --- location ---    latitude,    longitude,    zoomLevel,    macroRegion,    platform,    tideStationId,    currentStationId,    tideVariance,    gpxFile,    // --- content: image (resolved to URL + dimensions in the projection) ---    featuredImage{      alt,      caption,      hotspot,      crop,      "url": asset->url,      "dimensions": asset->metadata.dimensions    },    // Plain-text description for JSON-LD / metadata (no dedicated SEO field).    "descriptionText": pt::text(coalesce(spotCard, captMikeNotes, historicalAnalysis, environmentalFactors)),    // --- content: portable text (narrative sections; any may be null) ---    spotCard,    captMikeNotes,    historicalAnalysis,    environmentalFactors,    observationalFactors,    structureApproach,    gearTechnique,    QAcaptMike,    // --- relationships (weak refs; dangling targets resolve to null) ---    // Approaches: the plain []-> deref dangles for most refs (drafts.-prefixed    // ids), so resolve with the manual id-match deref — same pattern as    // lureCatalog/region. Recovers the diagram + description for the "Approaches"    // body section AND fixes the sidebar rail / Approach Routing chips, which    // previously under-resolved.    "approaches": approaches[]{      "a": *[_type == "approach" && ("drafts." + _id == ^._ref || _id == ^._ref)][0]{  _id,  name,  "slug": slug.current,  featuredDiagramUrl,  description}    }.a,    baitfish[]->{  _id,  name,  "slug": slug.current},    // Gear (lureCatalog) refs are weak and drafts.-prefixed, so a plain deref    // dangles for ~90% of spots. Resolve with the manual id-match deref (same    // pattern as region/structure) so the sidebar gear rail actually populates.    "lureCatalog": lureCatalog[]{      "g": *[_type == "lureCatalog" && ("drafts." + _id == ^._ref || _id == ^._ref)][0]{  _id,  name,  "slug": slug.current,  imageURL,  websiteLink}    }.g,    lureGearCategory[]->{  _id,  name,  "slug": slug.current},    microSeason[]->{  _id,  name,  "slug": slug.current},    mode[]->{  _id,  name,  "slug": slug.current},    parentLure[]->{  _id,  name,  "slug": slug.current},    region[]->{  _id,  name,  "slug": slug.current},    // Raw refs (not deref'd) so the server can build the related-videos query    // params — most deref to null (dangling), but the _ref value is matchable.    "regionRef": region[0]._ref,    "targetSpeciesRefs": targetSpecies[]._ref,    seasons[]->{  _id,  name,  "slug": slug.current},    "structureTypes": coalesce(      structureTypes[]->{  _id,  name,  "slug": slug.current},      structure[]->{  _id,  name,  "slug": slug.current}    ),    targetSpecies[]->{  _id,  name,  "slug": slug.current},    techniqueRetrieve[]->{  _id,  name,  "slug": slug.current},    zone[]->{  _id,  name,  "slug": slug.current},    relatedVideos[]->{  _id,  name,  "slug": slug.current},    boatRamps[]->{  _id,  name,  "slug": slug.current},    nearbySpots[]->{      _id,      name,      id,      "slug": slug.current,      // Coordinates power the chart's nearby markers (see lib/nearby.ts); scalar      // lat/lng, not a geopoint. Any may be null on an unmapped spot.      latitude,      longitude,      "summary": pt::text(coalesce(spotCard, captMikeNotes))    },    subSpotsFXApproaches[]->{  _id,  name,  "slug": slug.current}  }
 export type SpotBySlugQueryResult = {
   _id: string;
   _type: "spot";
@@ -1082,7 +1082,9 @@ export type SpotBySlugQueryResult = {
     _id: string;
     name: string | null;
     slug: string | null;
-  }> | null;
+    featuredDiagramUrl: string | null;
+    description: RichText | null;
+  } | null> | null;
   baitfish: Array<{
     _id: string;
     name: string | null;
@@ -1332,7 +1334,7 @@ export type TaxonomyIndexQueryResult = Array<{
 
 // Source: lib/sanity/queries.ts
 // Variable: taxonomyDocBySlugQuery
-// Query: *[_type in $types && slug.current == $slug][0]{    _id,    _type,    name,    id,    "slug": slug.current,    description,    "descriptionText": pt::text(description)  }
+// Query: *[_type in $types && slug.current == $slug][0]{    _id,    _type,    name,    id,    "slug": slug.current,    description,    "descriptionText": pt::text(description),    // Approach-only: the featured route diagram (plain ImageKit URL). Null for    // every other taxonomy type, so the template just renders it when present.    featuredDiagramUrl  }
 export type TaxonomyDocBySlugQueryResult =
   | {
       _id: string;
@@ -1342,6 +1344,7 @@ export type TaxonomyDocBySlugQueryResult =
       slug: string | null;
       description: RichText | null;
       descriptionText: string;
+      featuredDiagramUrl: string | null;
     }
   | {
       _id: string;
@@ -1351,6 +1354,7 @@ export type TaxonomyDocBySlugQueryResult =
       slug: string | null;
       description: null;
       descriptionText: string;
+      featuredDiagramUrl: null;
     }
   | {
       _id: string;
@@ -1360,6 +1364,7 @@ export type TaxonomyDocBySlugQueryResult =
       slug: string | null;
       description: RichText | null;
       descriptionText: string;
+      featuredDiagramUrl: null;
     }
   | {
       _id: string;
@@ -1369,6 +1374,7 @@ export type TaxonomyDocBySlugQueryResult =
       slug: string | null;
       description: RichText | null;
       descriptionText: string;
+      featuredDiagramUrl: null;
     }
   | {
       _id: string;
@@ -1378,6 +1384,7 @@ export type TaxonomyDocBySlugQueryResult =
       slug: string | null;
       description: RichText | null;
       descriptionText: string;
+      featuredDiagramUrl: null;
     }
   | {
       _id: string;
@@ -1387,6 +1394,7 @@ export type TaxonomyDocBySlugQueryResult =
       slug: string | null;
       description: RichText | null;
       descriptionText: string;
+      featuredDiagramUrl: null;
     }
   | {
       _id: string;
@@ -1396,6 +1404,7 @@ export type TaxonomyDocBySlugQueryResult =
       slug: string | null;
       description: null;
       descriptionText: string;
+      featuredDiagramUrl: null;
     }
   | {
       _id: string;
@@ -1405,6 +1414,7 @@ export type TaxonomyDocBySlugQueryResult =
       slug: string | null;
       description: null;
       descriptionText: string;
+      featuredDiagramUrl: null;
     }
   | {
       _id: string;
@@ -1414,6 +1424,7 @@ export type TaxonomyDocBySlugQueryResult =
       slug: string | null;
       description: null;
       descriptionText: string;
+      featuredDiagramUrl: null;
     }
   | {
       _id: string;
@@ -1423,6 +1434,7 @@ export type TaxonomyDocBySlugQueryResult =
       slug: string | null;
       description: null;
       descriptionText: string;
+      featuredDiagramUrl: null;
     }
   | {
       _id: string;
@@ -1432,6 +1444,7 @@ export type TaxonomyDocBySlugQueryResult =
       slug: null;
       description: null;
       descriptionText: string;
+      featuredDiagramUrl: null;
     }
   | {
       _id: string;
@@ -1441,6 +1454,7 @@ export type TaxonomyDocBySlugQueryResult =
       slug: string | null;
       description: RichText | null;
       descriptionText: string;
+      featuredDiagramUrl: null;
     }
   | {
       _id: string;
@@ -1450,6 +1464,7 @@ export type TaxonomyDocBySlugQueryResult =
       slug: string | null;
       description: null;
       descriptionText: string;
+      featuredDiagramUrl: null;
     }
   | {
       _id: string;
@@ -1459,6 +1474,7 @@ export type TaxonomyDocBySlugQueryResult =
       slug: string | null;
       description: null;
       descriptionText: string;
+      featuredDiagramUrl: null;
     }
   | {
       _id: string;
@@ -1468,6 +1484,7 @@ export type TaxonomyDocBySlugQueryResult =
       slug: string | null;
       description: null;
       descriptionText: string;
+      featuredDiagramUrl: null;
     }
   | {
       _id: string;
@@ -1477,6 +1494,7 @@ export type TaxonomyDocBySlugQueryResult =
       slug: string | null;
       description: null;
       descriptionText: string;
+      featuredDiagramUrl: null;
     }
   | {
       _id: string;
@@ -1486,6 +1504,7 @@ export type TaxonomyDocBySlugQueryResult =
       slug: null;
       description: string | null;
       descriptionText: string;
+      featuredDiagramUrl: null;
     }
   | {
       _id: string;
@@ -1495,6 +1514,7 @@ export type TaxonomyDocBySlugQueryResult =
       slug: null;
       description: string | null;
       descriptionText: string;
+      featuredDiagramUrl: null;
     }
   | {
       _id: string;
@@ -1504,6 +1524,7 @@ export type TaxonomyDocBySlugQueryResult =
       slug: string | null;
       description: null;
       descriptionText: string;
+      featuredDiagramUrl: null;
     }
   | {
       _id: string;
@@ -1513,6 +1534,7 @@ export type TaxonomyDocBySlugQueryResult =
       slug: string | null;
       description: RichText | null;
       descriptionText: string;
+      featuredDiagramUrl: null;
     }
   | {
       _id: string;
@@ -1522,6 +1544,7 @@ export type TaxonomyDocBySlugQueryResult =
       slug: string | null;
       description: null;
       descriptionText: string;
+      featuredDiagramUrl: null;
     }
   | {
       _id: string;
@@ -1531,6 +1554,7 @@ export type TaxonomyDocBySlugQueryResult =
       slug: string | null;
       description: RichText | null;
       descriptionText: string;
+      featuredDiagramUrl: null;
     }
   | {
       _id: string;
@@ -1540,6 +1564,7 @@ export type TaxonomyDocBySlugQueryResult =
       slug: string | null;
       description: null;
       descriptionText: string;
+      featuredDiagramUrl: null;
     }
   | {
       _id: string;
@@ -1549,6 +1574,7 @@ export type TaxonomyDocBySlugQueryResult =
       slug: string | null;
       description: null;
       descriptionText: string;
+      featuredDiagramUrl: null;
     }
   | {
       _id: string;
@@ -1558,6 +1584,7 @@ export type TaxonomyDocBySlugQueryResult =
       slug: string | null;
       description: RichText | null;
       descriptionText: string;
+      featuredDiagramUrl: string | null;
     }
   | {
       _id: string;
@@ -1567,6 +1594,7 @@ export type TaxonomyDocBySlugQueryResult =
       slug: string | null;
       description: RichText | null;
       descriptionText: string;
+      featuredDiagramUrl: null;
     }
   | {
       _id: string;
@@ -1576,6 +1604,7 @@ export type TaxonomyDocBySlugQueryResult =
       slug: string | null;
       description: null;
       descriptionText: string;
+      featuredDiagramUrl: null;
     }
   | null;
 
@@ -1588,6 +1617,76 @@ export type TaxonomyReverseSpotsQueryResult = Array<{
   id: string | null;
   slug: string | null;
   summary: string;
+}>;
+
+// Source: lib/sanity/queries.ts
+// Variable: speciesPostsIndexQuery
+// Query: *[_type == "speciesPost" && defined(slug.current)]{    _id,    _type,    name,    "slug": slug.current,    "excerpt": array::join(string::split(pt::text(description), " ")[0...45], " "),    "species": targetSpecies[]{  "r": *[_type == "targetSpecies" && ("drafts." + _id == ^._ref || _id == ^._ref)][0]{    "name": name, "slug": slug.current  }}.r,    "baitfish": baitfish[]{  "r": *[_type == "baitfish" && ("drafts." + _id == ^._ref || _id == ^._ref)][0]{    "name": name, "slug": slug.current  }}.r  } | order(name)
+export type SpeciesPostsIndexQueryResult = Array<{
+  _id: string;
+  _type: "speciesPost";
+  name: string | null;
+  slug: string | null;
+  excerpt: string;
+  species: Array<{
+    name: string | null;
+    slug: string | null;
+  } | null> | null;
+  baitfish: Array<{
+    name: string | null;
+    slug: string | null;
+  } | null> | null;
+}>;
+
+// Source: lib/sanity/queries.ts
+// Variable: speciesPostSlugsQuery
+// Query: *[_type == "speciesPost" && defined(slug.current)]{ "slug": slug.current }
+export type SpeciesPostSlugsQueryResult = Array<{
+  slug: string | null;
+}>;
+
+// Source: lib/sanity/queries.ts
+// Variable: speciesPostBySlugQuery
+// Query: *[_type == "speciesPost" && slug.current == $slug][0]{    _id,    _type,    name,    id,    "slug": slug.current,    description,    "descriptionText": pt::text(description),    "species": targetSpecies[]{  "r": *[_type == "targetSpecies" && ("drafts." + _id == ^._ref || _id == ^._ref)][0]{    "name": name, "slug": slug.current  }}.r,    "baitfish": baitfish[]{  "r": *[_type == "baitfish" && ("drafts." + _id == ^._ref || _id == ^._ref)][0]{    "name": name, "slug": slug.current  }}.r  }
+export type SpeciesPostBySlugQueryResult = {
+  _id: string;
+  _type: "speciesPost";
+  name: string | null;
+  id: string | null;
+  slug: string | null;
+  description: RichText | null;
+  descriptionText: string;
+  species: Array<{
+    name: string | null;
+    slug: string | null;
+  } | null> | null;
+  baitfish: Array<{
+    name: string | null;
+    slug: string | null;
+  } | null> | null;
+} | null;
+
+// Source: lib/sanity/queries.ts
+// Variable: postsBySpeciesQuery
+// Query: *[_type == "speciesPost" && references($ids)]{    _id,    name,    "slug": slug.current,    "excerpt": array::join(string::split(pt::text(description), " ")[0...45], " ")  } | order(name)
+export type PostsBySpeciesQueryResult = Array<{
+  _id: string;
+  name: string | null;
+  slug: string | null;
+  excerpt: string;
+}>;
+
+// Source: lib/sanity/queries.ts
+// Variable: spotsBySpeciesQuery
+// Query: *[_type == "spot" && references($ids)]{    _id,    id,    name,    "slug": slug.current,    latitude,    longitude,    "kind": select(      spotType in ["br-boat-ramp", "boat-ramp", "BR - Boat Ramp"] => "ramp",      "spot"    )  } | order(name)
+export type SpotsBySpeciesQueryResult = Array<{
+  _id: string;
+  id: string | null;
+  name: string | null;
+  slug: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  kind: "ramp" | "spot";
 }>;
 
 // Source: lib/sanity/queries.ts
@@ -1746,11 +1845,140 @@ export type SpotCardsByRegionQueryResult = Array<{
   summary: string;
 }>;
 
+// Source: lib/sanity/queries.ts
+// Variable: searchIndexQuery
+// Query: {    "spots": *[_type == "spot" && defined(slug.current)]{      _id, _type, id, name, "slug": slug.current,      "body": pt::text(spotCard) + " " + pt::text(captMikeNotes) + " " +        pt::text(historicalAnalysis) + " " + pt::text(environmentalFactors) + " " +        pt::text(observationalFactors) + " " + pt::text(structureApproach) + " " +        pt::text(gearTechnique) + " " + pt::text(QAcaptMike)    },    "videos": *[_type == "video" && defined(slug.current)]{      _id, _type, id, "slug": slug.current,      "name": coalesce(name, youtubeTitle),      "body": pt::text(description),      "regionName": *[_type == "region" && ("drafts." + _id == ^.region._ref || _id == ^.region._ref)][0].name    },    "approaches": *[_type == "approach" && defined(slug.current)]{      _id, _type, id, name, "slug": slug.current, "body": pt::text(description)    },    "structures": *[_type in ["structure", "structureType"] && defined(slug.current)]{      _id, _type, id, name, "slug": slug.current, "body": pt::text(description)    },    "techniques": *[_type == "techniqueRetrieve" && defined(slug.current)]{      _id, _type, id, name, "slug": slug.current, "body": pt::text(description)    },    "baitfish": *[_type == "baitfish" && defined(slug.current)]{      _id, _type, id, name, "slug": slug.current, "body": pt::text(description)    },    "species": *[_type == "targetSpecies" && defined(slug.current)]{      _id, _type, id, name, "slug": slug.current, "body": pt::text(description)    },    "gearPosts": *[_type == "gearPost" && defined(slug.current)]{      _id, _type, id, name, "slug": slug.current, "body": pt::text(description)    },    "lures": *[_type == "lureCatalog" && defined(slug.current)]{      _id, _type, id, name, "slug": slug.current, "body": pt::text(description)    },    "parentLures": *[_type == "parentLure" && defined(slug.current)]{      _id, _type, id, name, "slug": slug.current, "body": pt::text(description)    },    "regions": *[_type == "region" && defined(slug.current)]{      _id, _type, id, name, "slug": slug.current, "body": pt::text(description)    },    "seasons": *[_type == "season" && defined(slug.current)]{      _id, _type, id, name, "slug": slug.current, "body": pt::text(description)    },    "zones": *[_type == "zone" && defined(slug.current)]{      _id, _type, id, name, "slug": slug.current, "body": pt::text(description)    },    "microSeasons": *[_type == "microSeason" && defined(slug.current)]{      _id, _type, id, name, "slug": slug.current, "body": pt::text(description)    }  }
+export type SearchIndexQueryResult = {
+  spots: Array<{
+    _id: string;
+    _type: "spot";
+    id: string | null;
+    name: string | null;
+    slug: string | null;
+    body: string;
+  }>;
+  videos: Array<{
+    _id: string;
+    _type: "video";
+    id: string | null;
+    slug: string | null;
+    name: string | null;
+    body: string;
+    regionName: string | null;
+  }>;
+  approaches: Array<{
+    _id: string;
+    _type: "approach";
+    id: string | null;
+    name: string | null;
+    slug: string | null;
+    body: string;
+  }>;
+  structures: Array<
+    | {
+        _id: string;
+        _type: "structure";
+        id: string | null;
+        name: string | null;
+        slug: string | null;
+        body: string;
+      }
+    | {
+        _id: string;
+        _type: "structureType";
+        id: string | null;
+        name: string | null;
+        slug: string | null;
+        body: string;
+      }
+  >;
+  techniques: Array<{
+    _id: string;
+    _type: "techniqueRetrieve";
+    id: string | null;
+    name: string | null;
+    slug: string | null;
+    body: string;
+  }>;
+  baitfish: Array<{
+    _id: string;
+    _type: "baitfish";
+    id: string | null;
+    name: string | null;
+    slug: string | null;
+    body: string;
+  }>;
+  species: Array<{
+    _id: string;
+    _type: "targetSpecies";
+    id: string | null;
+    name: string | null;
+    slug: string | null;
+    body: string;
+  }>;
+  gearPosts: Array<{
+    _id: string;
+    _type: "gearPost";
+    id: string | null;
+    name: string | null;
+    slug: string | null;
+    body: string;
+  }>;
+  lures: Array<{
+    _id: string;
+    _type: "lureCatalog";
+    id: string | null;
+    name: string | null;
+    slug: string | null;
+    body: string;
+  }>;
+  parentLures: Array<{
+    _id: string;
+    _type: "parentLure";
+    id: string | null;
+    name: string | null;
+    slug: string | null;
+    body: string;
+  }>;
+  regions: Array<{
+    _id: string;
+    _type: "region";
+    id: string | null;
+    name: string | null;
+    slug: string | null;
+    body: string;
+  }>;
+  seasons: Array<{
+    _id: string;
+    _type: "season";
+    id: string | null;
+    name: string | null;
+    slug: string | null;
+    body: string;
+  }>;
+  zones: Array<{
+    _id: string;
+    _type: "zone";
+    id: string | null;
+    name: string | null;
+    slug: string | null;
+    body: string;
+  }>;
+  microSeasons: Array<{
+    _id: string;
+    _type: "microSeason";
+    id: string | null;
+    name: string | null;
+    slug: string | null;
+    body: string;
+  }>;
+};
+
 // Query TypeMap
 import "@sanity/client";
 declare module "@sanity/client" {
   interface SanityQueries {
-    '\n  *[_type == "spot" && slug.current == $slug][0]{\n    // --- identity / system ---\n    _id,\n    _type,\n    _createdAt,\n    _updatedAt,\n    id,\n    name,\n    "slug": slug.current,\n\n    // --- details ---\n    spotId,\n    postType,\n    spotType,\n    version,\n    publishDate,\n    depthRange,\n    hazards,\n    approachCodePrefix,\n    approachCount,\n    microSeasons,\n\n    // --- location ---\n    latitude,\n    longitude,\n    zoomLevel,\n    macroRegion,\n    platform,\n    tideStationId,\n    currentStationId,\n    tideVariance,\n    gpxFile,\n\n    // --- content: image (resolved to URL + dimensions in the projection) ---\n    featuredImage{\n      alt,\n      caption,\n      hotspot,\n      crop,\n      "url": asset->url,\n      "dimensions": asset->metadata.dimensions\n    },\n\n    // Plain-text description for JSON-LD / metadata (no dedicated SEO field).\n    "descriptionText": pt::text(coalesce(spotCard, captMikeNotes, historicalAnalysis, environmentalFactors)),\n\n    // --- content: portable text (narrative sections; any may be null) ---\n    spotCard,\n    captMikeNotes,\n    historicalAnalysis,\n    environmentalFactors,\n    observationalFactors,\n    structureApproach,\n    gearTechnique,\n    QAcaptMike,\n\n    // --- relationships (weak refs; dangling targets resolve to null) ---\n    approaches[]->{\n  _id,\n  name,\n  "slug": slug.current\n},\n    baitfish[]->{\n  _id,\n  name,\n  "slug": slug.current\n},\n    // Gear (lureCatalog) refs are weak and drafts.-prefixed, so a plain deref\n    // dangles for ~90% of spots. Resolve with the manual id-match deref (same\n    // pattern as region/structure) so the sidebar gear rail actually populates.\n    "lureCatalog": lureCatalog[]{\n      "g": *[_type == "lureCatalog" && ("drafts." + _id == ^._ref || _id == ^._ref)][0]{\n  _id,\n  name,\n  "slug": slug.current,\n  imageURL,\n  websiteLink\n}\n    }.g,\n    lureGearCategory[]->{\n  _id,\n  name,\n  "slug": slug.current\n},\n    microSeason[]->{\n  _id,\n  name,\n  "slug": slug.current\n},\n    mode[]->{\n  _id,\n  name,\n  "slug": slug.current\n},\n    parentLure[]->{\n  _id,\n  name,\n  "slug": slug.current\n},\n    region[]->{\n  _id,\n  name,\n  "slug": slug.current\n},\n    // Raw refs (not deref\'d) so the server can build the related-videos query\n    // params \u2014 most deref to null (dangling), but the _ref value is matchable.\n    "regionRef": region[0]._ref,\n    "targetSpeciesRefs": targetSpecies[]._ref,\n    seasons[]->{\n  _id,\n  name,\n  "slug": slug.current\n},\n    "structureTypes": coalesce(\n      structureTypes[]->{\n  _id,\n  name,\n  "slug": slug.current\n},\n      structure[]->{\n  _id,\n  name,\n  "slug": slug.current\n}\n    ),\n    targetSpecies[]->{\n  _id,\n  name,\n  "slug": slug.current\n},\n    techniqueRetrieve[]->{\n  _id,\n  name,\n  "slug": slug.current\n},\n    zone[]->{\n  _id,\n  name,\n  "slug": slug.current\n},\n    relatedVideos[]->{\n  _id,\n  name,\n  "slug": slug.current\n},\n    boatRamps[]->{\n  _id,\n  name,\n  "slug": slug.current\n},\n    nearbySpots[]->{\n      _id,\n      name,\n      id,\n      "slug": slug.current,\n      // Coordinates power the chart\'s nearby markers (see lib/nearby.ts); scalar\n      // lat/lng, not a geopoint. Any may be null on an unmapped spot.\n      latitude,\n      longitude,\n      "summary": pt::text(coalesce(spotCard, captMikeNotes))\n    },\n    subSpotsFXApproaches[]->{\n  _id,\n  name,\n  "slug": slug.current\n}\n  }\n': SpotBySlugQueryResult;
+    '\n  *[_type == "spot" && slug.current == $slug][0]{\n    // --- identity / system ---\n    _id,\n    _type,\n    _createdAt,\n    _updatedAt,\n    id,\n    name,\n    "slug": slug.current,\n\n    // --- details ---\n    spotId,\n    postType,\n    spotType,\n    version,\n    publishDate,\n    depthRange,\n    hazards,\n    approachCodePrefix,\n    approachCount,\n    microSeasons,\n\n    // --- location ---\n    latitude,\n    longitude,\n    zoomLevel,\n    macroRegion,\n    platform,\n    tideStationId,\n    currentStationId,\n    tideVariance,\n    gpxFile,\n\n    // --- content: image (resolved to URL + dimensions in the projection) ---\n    featuredImage{\n      alt,\n      caption,\n      hotspot,\n      crop,\n      "url": asset->url,\n      "dimensions": asset->metadata.dimensions\n    },\n\n    // Plain-text description for JSON-LD / metadata (no dedicated SEO field).\n    "descriptionText": pt::text(coalesce(spotCard, captMikeNotes, historicalAnalysis, environmentalFactors)),\n\n    // --- content: portable text (narrative sections; any may be null) ---\n    spotCard,\n    captMikeNotes,\n    historicalAnalysis,\n    environmentalFactors,\n    observationalFactors,\n    structureApproach,\n    gearTechnique,\n    QAcaptMike,\n\n    // --- relationships (weak refs; dangling targets resolve to null) ---\n    // Approaches: the plain []-> deref dangles for most refs (drafts.-prefixed\n    // ids), so resolve with the manual id-match deref \u2014 same pattern as\n    // lureCatalog/region. Recovers the diagram + description for the "Approaches"\n    // body section AND fixes the sidebar rail / Approach Routing chips, which\n    // previously under-resolved.\n    "approaches": approaches[]{\n      "a": *[_type == "approach" && ("drafts." + _id == ^._ref || _id == ^._ref)][0]{\n  _id,\n  name,\n  "slug": slug.current,\n  featuredDiagramUrl,\n  description\n}\n    }.a,\n    baitfish[]->{\n  _id,\n  name,\n  "slug": slug.current\n},\n    // Gear (lureCatalog) refs are weak and drafts.-prefixed, so a plain deref\n    // dangles for ~90% of spots. Resolve with the manual id-match deref (same\n    // pattern as region/structure) so the sidebar gear rail actually populates.\n    "lureCatalog": lureCatalog[]{\n      "g": *[_type == "lureCatalog" && ("drafts." + _id == ^._ref || _id == ^._ref)][0]{\n  _id,\n  name,\n  "slug": slug.current,\n  imageURL,\n  websiteLink\n}\n    }.g,\n    lureGearCategory[]->{\n  _id,\n  name,\n  "slug": slug.current\n},\n    microSeason[]->{\n  _id,\n  name,\n  "slug": slug.current\n},\n    mode[]->{\n  _id,\n  name,\n  "slug": slug.current\n},\n    parentLure[]->{\n  _id,\n  name,\n  "slug": slug.current\n},\n    region[]->{\n  _id,\n  name,\n  "slug": slug.current\n},\n    // Raw refs (not deref\'d) so the server can build the related-videos query\n    // params \u2014 most deref to null (dangling), but the _ref value is matchable.\n    "regionRef": region[0]._ref,\n    "targetSpeciesRefs": targetSpecies[]._ref,\n    seasons[]->{\n  _id,\n  name,\n  "slug": slug.current\n},\n    "structureTypes": coalesce(\n      structureTypes[]->{\n  _id,\n  name,\n  "slug": slug.current\n},\n      structure[]->{\n  _id,\n  name,\n  "slug": slug.current\n}\n    ),\n    targetSpecies[]->{\n  _id,\n  name,\n  "slug": slug.current\n},\n    techniqueRetrieve[]->{\n  _id,\n  name,\n  "slug": slug.current\n},\n    zone[]->{\n  _id,\n  name,\n  "slug": slug.current\n},\n    relatedVideos[]->{\n  _id,\n  name,\n  "slug": slug.current\n},\n    boatRamps[]->{\n  _id,\n  name,\n  "slug": slug.current\n},\n    nearbySpots[]->{\n      _id,\n      name,\n      id,\n      "slug": slug.current,\n      // Coordinates power the chart\'s nearby markers (see lib/nearby.ts); scalar\n      // lat/lng, not a geopoint. Any may be null on an unmapped spot.\n      latitude,\n      longitude,\n      "summary": pt::text(coalesce(spotCard, captMikeNotes))\n    },\n    subSpotsFXApproaches[]->{\n  _id,\n  name,\n  "slug": slug.current\n}\n  }\n': SpotBySlugQueryResult;
     '\n  *[_type == "video" && (\n    references($spotIds) ||\n    region._ref in $regionRefs ||\n    count(targetspecies[@._ref in $speciesRefs]) > 0\n  )]{\n    _id,\n    "title": coalesce(name, youtubeTitle),\n    // Slug drives the in-app video route (/videos/[slug]); the card links there\n    // instead of YouTube. A slugless video falls back to its watch URL.\n    "slug": slug.current,\n    videoID,\n    watchURL,\n    videoFilmDate,\n    "region": *[_type == "region" && ("drafts." + _id == ^.region._ref || _id == ^.region._ref)][0]{\n      name,\n      "slug": slug.current\n    },\n    "tier": select(\n      references($spotIds) => 1,\n      region._ref in $regionRefs => 2,\n      true => 3\n    )\n  } | order(tier asc, videoFilmDate desc)[0...6]\n': RelatedVideosForSpotQueryResult;
     '\n  *[_type == "video" && defined(slug.current)]{\n    _id,\n    "title": coalesce(name, youtubeTitle),\n    "slug": slug.current,\n    videoID,\n    watchURL,\n    videoFilmDate,\n    videoCategory,\n    "region": *[_type == "region" && ("drafts." + _id == ^.region._ref || _id == ^.region._ref)][0]{\n      name,\n      "slug": slug.current\n    },\n    // Filter facets \u2014 resolved names via the manual drafts.-deref (plain deref\n    // dangles). Each drives a checkbox group in the videos filter sidebar.\n    "species": targetspecies[]{ "n": *[_type=="targetSpecies" && ("drafts."+_id==^._ref || _id==^._ref)][0].name }.n,\n    "structures": structure[]{ "n": *[_type=="structure" && ("drafts."+_id==^._ref || _id==^._ref)][0].name }.n,\n    "techniques": techniqueretrieve[]{ "n": *[_type=="techniqueRetrieve" && ("drafts."+_id==^._ref || _id==^._ref)][0].name }.n,\n    "gearCategories": lureGearCategory[]{ "n": *[_type=="lureGearCategory" && ("drafts."+_id==^._ref || _id==^._ref)][0].name }.n,\n    "seasons": season[]{ "n": *[_type=="season" && ("drafts."+_id==^._ref || _id==^._ref)][0].name }.n\n  } | order(videoFilmDate desc)\n': VideosIndexQueryResult;
     '\n  *[_type == "video" && defined(slug.current)]{ "slug": slug.current }\n': AllVideoSlugsQueryResult;
@@ -1762,11 +1990,17 @@ declare module "@sanity/client" {
     '\n  *[_type == "spot" && spotType in ["fs-featured-spot", "br-boat-ramp", "boat-ramp", "BR - Boat Ramp"]]{\n    _id,\n    id,\n    name,\n    "slug": slug.current,\n    latitude,\n    longitude,\n    "kind": select(spotType == "fs-featured-spot" => "spot", "ramp"),\n    "summary": pt::text(coalesce(spotCard, captMikeNotes)),\n    "structures": structure[]{\n      "r": *[_type == "structure" && ("drafts." + _id == ^._ref || _id == ^._ref)][0]{\n        "name": name,\n        "slug": slug.current\n      }\n    }.r,\n    "species": targetSpecies[]{\n      "r": *[_type == "targetSpecies" && ("drafts." + _id == ^._ref || _id == ^._ref)][0]{\n        "name": name,\n        "slug": slug.current\n      }\n    }.r\n  } | order(name)\n': FsSpotsQueryResult;
     '\n  *[_type in $types && defined(slug.current)]{ "slug": slug.current }\n': TaxonomySlugsQueryResult;
     '\n  *[_type in $types && defined(slug.current)]{\n    _id,\n    name,\n    id,\n    "slug": slug.current\n  } | order(name)\n': TaxonomyIndexQueryResult;
-    '\n  *[_type in $types && slug.current == $slug][0]{\n    _id,\n    _type,\n    name,\n    id,\n    "slug": slug.current,\n    description,\n    "descriptionText": pt::text(description)\n  }\n': TaxonomyDocBySlugQueryResult;
+    '\n  *[_type in $types && slug.current == $slug][0]{\n    _id,\n    _type,\n    name,\n    id,\n    "slug": slug.current,\n    description,\n    "descriptionText": pt::text(description),\n    // Approach-only: the featured route diagram (plain ImageKit URL). Null for\n    // every other taxonomy type, so the template just renders it when present.\n    featuredDiagramUrl\n  }\n': TaxonomyDocBySlugQueryResult;
     '\n  *[_type == "spot" && references($ids)]{\n    \n  _id,\n  name,\n  id,\n  "slug": slug.current,\n  "summary": pt::text(coalesce(spotCard, captMikeNotes))\n\n  } | order(name)\n': TaxonomyReverseSpotsQueryResult;
+    '\n  *[_type == "speciesPost" && defined(slug.current)]{\n    _id,\n    _type,\n    name,\n    "slug": slug.current,\n    "excerpt": array::join(string::split(pt::text(description), " ")[0...45], " "),\n    "species": targetSpecies[]{\n  "r": *[_type == "targetSpecies" && ("drafts." + _id == ^._ref || _id == ^._ref)][0]{\n    "name": name, "slug": slug.current\n  }\n}.r,\n    "baitfish": baitfish[]{\n  "r": *[_type == "baitfish" && ("drafts." + _id == ^._ref || _id == ^._ref)][0]{\n    "name": name, "slug": slug.current\n  }\n}.r\n  } | order(name)\n': SpeciesPostsIndexQueryResult;
+    '\n  *[_type == "speciesPost" && defined(slug.current)]{ "slug": slug.current }\n': SpeciesPostSlugsQueryResult;
+    '\n  *[_type == "speciesPost" && slug.current == $slug][0]{\n    _id,\n    _type,\n    name,\n    id,\n    "slug": slug.current,\n    description,\n    "descriptionText": pt::text(description),\n    "species": targetSpecies[]{\n  "r": *[_type == "targetSpecies" && ("drafts." + _id == ^._ref || _id == ^._ref)][0]{\n    "name": name, "slug": slug.current\n  }\n}.r,\n    "baitfish": baitfish[]{\n  "r": *[_type == "baitfish" && ("drafts." + _id == ^._ref || _id == ^._ref)][0]{\n    "name": name, "slug": slug.current\n  }\n}.r\n  }\n': SpeciesPostBySlugQueryResult;
+    '\n  *[_type == "speciesPost" && references($ids)]{\n    _id,\n    name,\n    "slug": slug.current,\n    "excerpt": array::join(string::split(pt::text(description), " ")[0...45], " ")\n  } | order(name)\n': PostsBySpeciesQueryResult;
+    '\n  *[_type == "spot" && references($ids)]{\n    _id,\n    id,\n    name,\n    "slug": slug.current,\n    latitude,\n    longitude,\n    "kind": select(\n      spotType in ["br-boat-ramp", "boat-ramp", "BR - Boat Ramp"] => "ramp",\n      "spot"\n    )\n  } | order(name)\n': SpotsBySpeciesQueryResult;
     '\n  *[_type == "spot" && defined(slug.current)]{ "slug": slug.current, _updatedAt }\n': SitemapSpotsQueryResult;
     '\n  *[_type in $types && defined(slug.current)]{ _type, "slug": slug.current, _updatedAt }\n': SitemapTaxonomyQueryResult;
     '\n  *[_type == "spot" && slug.current == $slug][0]{\n    \n  _id,\n  name,\n  id,\n  "slug": slug.current,\n  "summary": pt::text(coalesce(spotCard, captMikeNotes))\n\n  }\n': SpotCardBySlugQueryResult;
     '\n  *[_type == "spot" && defined(slug.current) && (\n    string::startsWith(id, $code + ".") || string::startsWith(id, $code + "_")\n  )]{\n    \n  _id,\n  name,\n  id,\n  "slug": slug.current,\n  "summary": pt::text(coalesce(spotCard, captMikeNotes))\n\n  } | order(name)\n': SpotCardsByRegionQueryResult;
+    '\n  {\n    "spots": *[_type == "spot" && defined(slug.current)]{\n      _id, _type, id, name, "slug": slug.current,\n      "body": pt::text(spotCard) + " " + pt::text(captMikeNotes) + " " +\n        pt::text(historicalAnalysis) + " " + pt::text(environmentalFactors) + " " +\n        pt::text(observationalFactors) + " " + pt::text(structureApproach) + " " +\n        pt::text(gearTechnique) + " " + pt::text(QAcaptMike)\n    },\n    "videos": *[_type == "video" && defined(slug.current)]{\n      _id, _type, id, "slug": slug.current,\n      "name": coalesce(name, youtubeTitle),\n      "body": pt::text(description),\n      "regionName": *[_type == "region" && ("drafts." + _id == ^.region._ref || _id == ^.region._ref)][0].name\n    },\n    "approaches": *[_type == "approach" && defined(slug.current)]{\n      _id, _type, id, name, "slug": slug.current, "body": pt::text(description)\n    },\n    "structures": *[_type in ["structure", "structureType"] && defined(slug.current)]{\n      _id, _type, id, name, "slug": slug.current, "body": pt::text(description)\n    },\n    "techniques": *[_type == "techniqueRetrieve" && defined(slug.current)]{\n      _id, _type, id, name, "slug": slug.current, "body": pt::text(description)\n    },\n    "baitfish": *[_type == "baitfish" && defined(slug.current)]{\n      _id, _type, id, name, "slug": slug.current, "body": pt::text(description)\n    },\n    "species": *[_type == "targetSpecies" && defined(slug.current)]{\n      _id, _type, id, name, "slug": slug.current, "body": pt::text(description)\n    },\n    "gearPosts": *[_type == "gearPost" && defined(slug.current)]{\n      _id, _type, id, name, "slug": slug.current, "body": pt::text(description)\n    },\n    "lures": *[_type == "lureCatalog" && defined(slug.current)]{\n      _id, _type, id, name, "slug": slug.current, "body": pt::text(description)\n    },\n    "parentLures": *[_type == "parentLure" && defined(slug.current)]{\n      _id, _type, id, name, "slug": slug.current, "body": pt::text(description)\n    },\n    "regions": *[_type == "region" && defined(slug.current)]{\n      _id, _type, id, name, "slug": slug.current, "body": pt::text(description)\n    },\n    "seasons": *[_type == "season" && defined(slug.current)]{\n      _id, _type, id, name, "slug": slug.current, "body": pt::text(description)\n    },\n    "zones": *[_type == "zone" && defined(slug.current)]{\n      _id, _type, id, name, "slug": slug.current, "body": pt::text(description)\n    },\n    "microSeasons": *[_type == "microSeason" && defined(slug.current)]{\n      _id, _type, id, name, "slug": slug.current, "body": pt::text(description)\n    }\n  }\n': SearchIndexQueryResult;
   }
 }

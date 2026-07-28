@@ -1,9 +1,11 @@
 import Link from 'next/link'
 
+import { SiteSearch } from '@/components/site/SiteSearch'
+
 /**
- * Primary site header. Sticky below the announcement bar. Server component —
- * the search input is a non-functional stub (search is its own phase), so no
- * client JS is needed here.
+ * Primary site header. Sticky below the announcement bar. Server component; the
+ * only interactive island is <SiteSearch />, a client component that lazily
+ * loads the static search index on first focus.
  */
 const NAV_LINKS: Array<{ label: string; href: string }> = [
   { label: 'Spots', href: '/spots' },
@@ -26,25 +28,24 @@ export function SiteHeader() {
           SALTY<span className="text-green-dark"> CAPE</span>
         </Link>
 
-        {/* Search stub — search is its own phase; this input does nothing. */}
-        {/* TODO: search is its own phase — non-functional stub */}
-        <div className="order-3 w-full sm:order-none sm:w-auto sm:flex-1">
-          <input
-            type="search"
-            readOnly
-            aria-label="Search (coming soon)"
-            placeholder="Search spots, species, gear…"
-            className="w-full max-w-md cursor-not-allowed rounded-[5px] border border-body bg-body px-3 py-1.5 font-mono text-sm text-header placeholder:text-header/60 focus:outline-none"
-          />
-        </div>
+        {/* Instant search — client island, lazy-loads /search-index.json. */}
+        <SiteSearch />
 
-        {/* Subscribe CTA */}
-        <Link
-          href="/#newsletter"
-          className="rounded-[5px] bg-red-dark px-4 py-1.5 font-mono text-sm font-semibold text-white transition-colors hover:bg-red-light"
-        >
-          Subscribe
-        </Link>
+        {/* CTAs — Spot Loc app promo (green, brand accent) beside Subscribe (red). */}
+        <div className="flex items-center gap-2">
+          <Link
+            href="/spotloc"
+            className="rounded-[5px] bg-green-dark px-4 py-1.5 font-mono text-sm font-semibold text-white transition-colors hover:bg-[#096b52]"
+          >
+            Get Spot Loc
+          </Link>
+          <Link
+            href="/#newsletter"
+            className="rounded-[5px] bg-red-dark px-4 py-1.5 font-mono text-sm font-semibold text-white transition-colors hover:bg-red-light"
+          >
+            Subscribe
+          </Link>
+        </div>
       </div>
 
       {/* Primary nav */}

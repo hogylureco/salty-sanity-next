@@ -16,7 +16,9 @@ export const TAXONOMIES: TaxonomyConfig[] = [
   { segment: 'approaches', types: ['approach'], label: 'Approaches' },
   { segment: 'techniques', types: ['techniqueRetrieve'], label: 'Techniques' },
   { segment: 'lures', types: ['lureCatalog'], label: 'Lures' },
-  { segment: 'gear', types: ['lureGearCategory'], label: 'Gear' },
+  // /gear lists `gearPost` articles; `lureGearCategory` slugs stay routable here
+  // too (spot chips link to them), so both types belong to the segment.
+  { segment: 'gear', types: ['gearPost', 'lureGearCategory'], label: 'Gear' },
   { segment: 'parent-lures', types: ['parentLure'], label: 'Parent Lures' },
   { segment: 'baitfish', types: ['baitfish'], label: 'Baitfish' },
   { segment: 'micro-seasons', types: ['microSeason'], label: 'Micro Seasons' },

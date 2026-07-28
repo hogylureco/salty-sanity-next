@@ -27,6 +27,9 @@ interface TaxonomyDoc {
   slug: string | null
   description: PortableTextValue | null
   descriptionText: string | null
+  // Present only on `approach` docs (null elsewhere); rendered at the top of the
+  // detail page when set.
+  featuredDiagramUrl: string | null
 }
 
 export async function generateTaxonomyStaticParams(types: string[]) {
@@ -106,6 +109,18 @@ export async function TaxonomyDetail({
         </h1>
         {doc.id && <p className="font-mono text-sm text-header">{doc.id}</p>}
       </header>
+      {doc.featuredDiagramUrl && (
+        <div className="box overflow-hidden p-0">
+          {/* Plain ImageKit URL (not a Sanity asset), so a bare <img> — same
+              treatment as the spot page's approach diagrams. */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={doc.featuredDiagramUrl}
+            alt={doc.name ? `${doc.name} approach diagram` : 'Approach diagram'}
+            className="w-full"
+          />
+        </div>
+      )}
       {doc.description && (
         <div className="box">
           <SpotPortableText value={doc.description} />

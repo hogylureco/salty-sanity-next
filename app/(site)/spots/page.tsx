@@ -100,7 +100,8 @@ export default async function SpotsIndexPage() {
         </p>
         <p>
           Navy teardrops are inshore boat spots; amber squares are boat ramps.
-          Zoom in once and each marker labels itself. Click a spot to open its
+          Hover any marker to see its name, or zoom in once and each marker
+          labels itself. Click a spot to open its
           full page — tides, the nautical chart, gear, and playbooks. Scroll-zoom
           is off so the page still scrolls normally; use the{' '}
           <span className="font-mono">+ / −</span> controls or pinch to zoom, and

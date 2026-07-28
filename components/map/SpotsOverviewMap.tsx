@@ -71,33 +71,42 @@ export default function SpotsOverviewMap({ markers }: SpotsOverviewMapProps) {
   const labelZoomRef = useRef<number>(Infinity)
   const router = useRouter()
   const [filter, setFilter] = useState<Filter>('all')
-  // Whether marker names are currently shown (zoom ≥ threshold). Drives the
-  // "zoom in" hint, which is only useful while the names are still hidden.
+  // Whether marker names are shown as permanent labels (zoom ≥ threshold).
+  // Drives the corner hint, which is only useful while labels are still hidden —
+  // below the threshold you hover a marker to read its name instead.
   const [namesVisible, setNamesVisible] = useState(false)
 
   const markerKey = markers.map((m) => m.id).join(',')
 
-  // Bind/unbind permanent labels based on the current zoom vs the threshold.
+  // Label markers based on the current zoom vs the threshold. Past it every
+  // marker gets a PERMANENT label; below it each marker instead gets a HOVER
+  // tooltip so you can point at any marker to read its name without zooming in.
+  // A Leaflet marker holds at most one tooltip, so we only rebind when the
+  // permanent↔hover state actually flips (or the marker enters/leaves the map
+  // via the filter) — not on every zoomend.
   function syncLabels(map: L.Map) {
     const show = map.getZoom() >= labelZoomRef.current
     setNamesVisible(show)
     for (const t of trackedRef.current) {
       const onMap = map.hasLayer(t.marker)
-      const bound = t.marker.getTooltip() != null
-      if (show && onMap && !bound) {
-        t.marker.bindTooltip(labelEl(t.name, t.kind), {
-          permanent: true,
-          // Interactive so a click on the LABEL routes to the marker's click
-          // handler (navigation), same as clicking the icon. Only when the spot
-          // has a page — a non-navigable ramp label shouldn't look clickable.
-          interactive: t.slug != null,
-          direction: 'top',
-          offset: [0, t.kind === 'spot' ? -14 : -8],
-          className: 'spot-label',
-        })
-      } else if ((!show || !onMap) && bound) {
-        t.marker.unbindTooltip()
+      const tip = t.marker.getTooltip()
+      if (!onMap) {
+        if (tip) t.marker.unbindTooltip()
+        continue
       }
+      // Already bound in the right mode (permanent vs hover)? Leave it.
+      if (tip && Boolean(tip.options.permanent) === show) continue
+      if (tip) t.marker.unbindTooltip()
+      t.marker.bindTooltip(labelEl(t.name, t.kind), {
+        permanent: show,
+        // A permanent label is clickable — a click routes to the spot, same as
+        // clicking the icon — but only when the spot has a page. A hover tooltip
+        // just reports the name, so it needn't (and shouldn't) be interactive.
+        interactive: show && t.slug != null,
+        direction: 'top',
+        offset: [0, t.kind === 'spot' ? -14 : -8],
+        className: 'spot-label',
+      })
     }
   }
 
@@ -236,14 +245,16 @@ export default function SpotsOverviewMap({ markers }: SpotsOverviewMapProps) {
         />
         {!namesVisible && (
           <div className="pointer-events-none absolute bottom-2 right-2 z-[1000] rounded-[5px] bg-box/90 px-2.5 py-1 font-mono text-xs font-semibold text-header shadow ring-1 ring-body backdrop-blur">
-            Zoom in to see spot names
+            Hover a marker for its name
           </div>
         )}
       </div>
       <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 px-1 text-xs text-header">
         <LegendKey color={NAVY} teardrop label="Inshore boat spot" />
         <LegendKey color={AMBER} label="Boat ramp" />
-        <span className="text-header/70">Zoom in once to label the markers.</span>
+        <span className="text-header/70">
+          Hover a marker for its name; zoom in once to label them all.
+        </span>
       </div>
     </div>
   )
