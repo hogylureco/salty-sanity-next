@@ -6,7 +6,9 @@ import { notFound } from 'next/navigation'
 
 import { JsonLd } from '@/components/JsonLd'
 import { SpotMapLoader } from '@/components/map/SpotMapLoader'
-import { PeakTidesToday } from '@/components/spot/dashboard/PeakTidesToday'
+// Hidden per request — restore this import when re-enabling the
+// "Peak Fishing Times Today" dashboard box below.
+// import { PeakTidesToday } from '@/components/spot/dashboard/PeakTidesToday'
 import { GearRail, type GearItem } from '@/components/spot/rail/GearRail'
 import { MoreAboutSpot, type ChipGroup } from '@/components/spot/rail/MoreAboutSpot'
 import {
@@ -16,7 +18,8 @@ import {
 import { SectionBox } from '@/components/spot/SectionBox'
 import { SpotTabs, type TabPanel } from '@/components/spot/SpotTabs'
 import { SpotToc } from '@/components/spot/SpotToc'
-import { SevenDayPeakWindows } from '@/components/spot/tabs/SevenDayPeakWindows'
+// Hidden per request — restore this import when re-enabling the Fishing Times tab.
+// import { SevenDayPeakWindows } from '@/components/spot/tabs/SevenDayPeakWindows'
 import { ExtendedForecast } from '@/components/spot/tabs/ExtendedForecast'
 import { SstChart } from '@/components/spot/tabs/SstChart'
 import { WindyEmbed } from '@/components/spot/tabs/WindyEmbed'
@@ -362,15 +365,20 @@ export default async function SpotPage({
   //     spacing only — no display utility — so the tab wrapper's `hidden` wins.
   const overviewPanel = (
     <div className="space-y-6">
-      {/* Dashboard: peak fishing times today + the chart. */}
-      <div className="grid gap-4 md:grid-cols-3">
+      {/* Dashboard: peak fishing times today + the chart.
+          The "Peak Fishing Times Today" box is hidden per request. To restore it,
+          un-comment the <PeakTidesToday/> box below, re-add its import at the top,
+          and revert this grid to `md:grid-cols-3` with the map at `md:col-span-2`. */}
+      <div className="grid gap-4">
+        {/* Hidden: Peak Fishing Times Today dashboard box.
         <div className="box">
           <PeakTidesToday
             spotId={spot._id}
             currentStationId={spot.currentStationId}
           />
         </div>
-        <div className="box overflow-hidden p-0 md:col-span-2">
+        */}
+        <div className="box overflow-hidden p-0">
           <SpotMapLoader
             lat={spot.latitude}
             lng={spot.longitude}
@@ -474,6 +482,9 @@ export default async function SpotPage({
   )
 
   // --- Fishing Times panel (7-day peak windows + seasonal windows)
+  //     Hidden per request. To restore, un-comment this const, re-add the
+  //     SevenDayPeakWindows import, and re-add the tab entry in `tabPanels`.
+  /*
   const fishingTimesPanel = (
     <div className="space-y-6">
       <div className="box">
@@ -500,6 +511,7 @@ export default async function SpotPage({
       </div>
     </div>
   )
+  */
 
   // --- Gear panel (full grid)
   const gearPanel = (
@@ -548,7 +560,8 @@ export default async function SpotPage({
     { id: 'overview', label: 'Overview', content: overviewPanel },
     { id: 'chart', label: 'Chart', content: chartPanel },
     { id: 'videos', label: 'Videos', content: videosPanel },
-    { id: 'fishing-times', label: 'Fishing Times', content: fishingTimesPanel },
+    // Hidden per request — restore this entry to bring back the Fishing Times tab.
+    // { id: 'fishing-times', label: 'Fishing Times', content: fishingTimesPanel },
     {
       id: 'weather',
       label: 'Weather',

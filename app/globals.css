@@ -90,3 +90,16 @@ body {
 .leaflet-tooltip.spot-label::before {
   display: none;
 }
+
+/*
+ * Wide-desktop container. The site content column is `max-w-6xl` (72rem/1152px)
+ * everywhere — header, nav, footer, and every page main. On very wide displays
+ * (2560×1440 and up) that leaves large empty gutters, so widen the shared column
+ * in one place. Unlayered, so it overrides Tailwind's utilities layer without a
+ * per-element responsive variant across ~18 call sites. Adjust the width here.
+ */
+@media (min-width: 2560px) {
+  .max-w-6xl {
+    max-width: 1800px;
+  }
+}

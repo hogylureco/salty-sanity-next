@@ -8,6 +8,7 @@ import { SiteSearch } from '@/components/site/SiteSearch'
  * loads the static search index on first focus.
  */
 const NAV_LINKS: Array<{ label: string; href: string }> = [
+  { label: "Capt. Mike's System", href: '/system' },
   { label: 'Spots', href: '/spots' },
   { label: 'Videos', href: '/videos' },
   { label: 'Species', href: '/species' },
@@ -31,7 +32,9 @@ export function SiteHeader() {
         {/* Instant search — client island, lazy-loads /search-index.json. */}
         <SiteSearch />
 
-        {/* CTAs — Spot Loc app promo (green, brand accent) beside Subscribe (red). */}
+        {/* CTAs removed per request — the "Get Spot Loc" (Spot Loc) and "Subscribe"
+            (Subscription) promos previously sat here. Restore this block to bring
+            them back; /spotloc pages still exist, just no longer linked.
         <div className="flex items-center gap-2">
           <Link
             href="/spotloc"
@@ -46,6 +49,7 @@ export function SiteHeader() {
             Subscribe
           </Link>
         </div>
+        */}
       </div>
 
       {/* Primary nav */}

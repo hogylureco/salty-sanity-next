@@ -51,8 +51,9 @@ export async function SiteFooter() {
 
   return (
     <footer className="mt-16">
-      {/* Newsletter CTA band — non-functional stub. */}
-      {/* TODO: newsletter signup is non-functional (no submit handler / list yet). */}
+      {/* Newsletter / Subscribe CTA band removed per request (the "Subscribe"
+          subscription reference). Restore this block to bring the newsletter
+          signup band back.
       <section
         id="newsletter"
         className="border-y border-body bg-body px-4 py-12"
@@ -85,6 +86,7 @@ export async function SiteFooter() {
           </form>
         </div>
       </section>
+      */}
 
       {/* Navy link footer. */}
       <div className="bg-[#0e2a3b] px-4 py-12 text-white">

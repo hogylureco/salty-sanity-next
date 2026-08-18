@@ -408,6 +408,80 @@ export const taxonomyReverseSpotsQuery = defineQuery(/* groq */ `
 `)
 
 /**
+ * --- Zone "system" pages (/system/[zone]) -------------------------------------
+ *
+ * Each system page (Boat Inshore, Boat Offshore, Shore) aggregates the taxonomy
+ * docs tagged with that zone. The `zone` reference is a WEAK ref that stores the
+ * zone's PLAIN (published) id, so callers pass BOTH id forms in `$zoneIds`
+ * (bothIdForms) and we match with `count(zone[@._ref in $zoneIds]) > 0` — this
+ * only fires on the `zone` field (not any other relationship on the doc).
+ *
+ * `zone` is present in the DATA on every type below, even though the deployed
+ * schema only declares it on approach/structure/techniqueRetrieve — these docs
+ * were imported before any schema existed, and parentLure/observational/
+ * environmental carry the field regardless.
+ *
+ * We project each doc's OWN fields (no dereference), so none of the weak-ref
+ * dangling that affects `[]->` derefs applies here.
+ *
+ * Two card shapes:
+ * - IMAGE cards (approach/structure/parentLure/technique): the thumbnail comes
+ *   from `featuredDiagramUrl` (approach/technique — a plain ImageKit route
+ *   diagram) or `imageURL` (parentLure — a product shot); structure carries
+ *   neither, so `imageUrl` resolves to null and a placeholder is rendered.
+ * - TEXT cards (observational/environmental): no image; the card shows an
+ *   excerpt flattened from the richText `description` (capped in the component).
+ */
+const systemImageItemProjection = /* groq */ `{
+  _id,
+  name,
+  "slug": slug.current,
+  "imageUrl": coalesce(featuredDiagramUrl, imageURL)
+}`
+
+const systemTextItemProjection = /* groq */ `{
+  _id,
+  name,
+  "slug": slug.current,
+  "excerpt": pt::text(description)
+}`
+
+export const systemByZoneQuery = defineQuery(/* groq */ `
+  {
+    "approaches": *[_type == "approach" && count(zone[@._ref in $zoneIds]) > 0]${systemImageItemProjection} | order(name),
+    "structures": *[_type == "structure" && count(zone[@._ref in $zoneIds]) > 0]${systemImageItemProjection} | order(name),
+    "parentLures": *[_type == "parentLure" && count(zone[@._ref in $zoneIds]) > 0]${systemImageItemProjection} | order(name),
+    "techniques": *[_type == "techniqueRetrieve" && count(zone[@._ref in $zoneIds]) > 0]${systemImageItemProjection} | order(name),
+    "observational": *[_type == "observational" && count(zone[@._ref in $zoneIds]) > 0]${systemTextItemProjection} | order(name),
+    "environmental": *[_type == "environmental" && count(zone[@._ref in $zoneIds]) > 0]${systemTextItemProjection} | order(name)
+  }
+`)
+
+/**
+ * Individual factor templates (/environmental/[slug], /observational/[slug]).
+ * `$type` selects the doc type ("environmental" or "observational"); both share
+ * the identity trio + a richText `description`. `zoneRefs` are the raw weak-ref
+ * ids (not deref'd) so the page can map them back to the system pages the factor
+ * appears in (see lib/system-zones `systemZoneByRef`).
+ */
+export const factorSlugsQuery = defineQuery(/* groq */ `
+  *[_type == $type && defined(slug.current)]{ "slug": slug.current }
+`)
+
+export const factorBySlugQuery = defineQuery(/* groq */ `
+  *[_type == $type && slug.current == $slug][0]{
+    _id,
+    _type,
+    name,
+    id,
+    "slug": slug.current,
+    description,
+    "descriptionText": pt::text(description),
+    "zoneRefs": zone[]._ref
+  }
+`)
+
+/**
  * --- Species posts (the /species hub + /species/posts/[slug] articles) --------
  *
  * `speciesPost` docs are long-form guides (avg ~6KB of body text). All refs are
@@ -606,5 +680,61 @@ export const searchIndexQuery = defineQuery(/* groq */ `
     "microSeasons": *[_type == "microSeason" && defined(slug.current)]{
       _id, _type, id, name, "slug": slug.current, "body": pt::text(description)
     }
+  }
+`)
+
+/**
+ * --- Seasonal homepage ---------------------------------------------------------
+ *
+ * One consolidated query drives the whole homepage: featured videos, spots, and
+ * how-to (`speciesPost`) guides for the current season's target species. Selection
+ * is tag-driven — a doc matches when its species reference array contains ANY of
+ * the season's species (see lib/homepage-season.ts). `$speciesIds` carries every
+ * target species id in BOTH forms (plain + `drafts.`-prefixed) so weak refs match
+ * in either perspective.
+ *
+ * Field-name gotcha carried over from the data: the species ref field is
+ * lowercase `targetspecies` on `video` but camelCase `targetSpecies` on `spot`
+ * and `speciesPost`. `count(field[@._ref in $speciesIds]) > 0` matches ONLY that
+ * field (not any other relationship), mirroring fsSpotsQuery / systemByZoneQuery.
+ *
+ * `speciesRefs` returns the RAW matched `_ref`s (no dereference — nothing to
+ * dangle); the page maps them back to the season config to render species chips.
+ * Ordering: videos by film date, spots by publish date (falling back to
+ * `_createdAt` so a null date still sorts), how-tos by name (speciesPost has no
+ * date field). Each list is capped generously in-query and sliced to the exact
+ * per-section count in the page, so raising a count never needs a query edit.
+ */
+export const homepageSeasonQuery = defineQuery(/* groq */ `
+  {
+    "videos": *[_type == "video" && defined(slug.current)
+      && count(targetspecies[@._ref in $speciesIds]) > 0]{
+      _id,
+      "title": coalesce(name, youtubeTitle),
+      "slug": slug.current,
+      videoID,
+      watchURL,
+      videoFilmDate,
+      "speciesRefs": targetspecies[@._ref in $speciesIds]._ref,
+      "region": *[_type == "region" && ("drafts." + _id == ^.region._ref || _id == ^.region._ref)][0]{
+        name,
+        "slug": slug.current
+      }
+    } | order(videoFilmDate desc)[0...24],
+
+    "spots": *[_type == "spot" && defined(slug.current)
+      && count(targetSpecies[@._ref in $speciesIds]) > 0]{
+      ${spotCardProjection},
+      "speciesRefs": targetSpecies[@._ref in $speciesIds]._ref
+    } | order(coalesce(publishDate, _createdAt) desc)[0...24],
+
+    "howTos": *[_type == "speciesPost" && defined(slug.current)
+      && count(targetSpecies[@._ref in $speciesIds]) > 0]{
+      _id,
+      name,
+      "slug": slug.current,
+      "excerpt": ${postExcerpt},
+      "speciesRefs": targetSpecies[@._ref in $speciesIds]._ref
+    } | order(name)[0...24]
   }
 `)

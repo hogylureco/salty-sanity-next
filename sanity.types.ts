@@ -1620,6 +1620,316 @@ export type TaxonomyReverseSpotsQueryResult = Array<{
 }>;
 
 // Source: lib/sanity/queries.ts
+// Variable: systemByZoneQuery
+// Query: {    "approaches": *[_type == "approach" && count(zone[@._ref in $zoneIds]) > 0]{  _id,  name,  "slug": slug.current,  "imageUrl": coalesce(featuredDiagramUrl, imageURL)} | order(name),    "structures": *[_type == "structure" && count(zone[@._ref in $zoneIds]) > 0]{  _id,  name,  "slug": slug.current,  "imageUrl": coalesce(featuredDiagramUrl, imageURL)} | order(name),    "parentLures": *[_type == "parentLure" && count(zone[@._ref in $zoneIds]) > 0]{  _id,  name,  "slug": slug.current,  "imageUrl": coalesce(featuredDiagramUrl, imageURL)} | order(name),    "techniques": *[_type == "techniqueRetrieve" && count(zone[@._ref in $zoneIds]) > 0]{  _id,  name,  "slug": slug.current,  "imageUrl": coalesce(featuredDiagramUrl, imageURL)} | order(name),    "observational": *[_type == "observational" && count(zone[@._ref in $zoneIds]) > 0]{  _id,  name,  "slug": slug.current,  "excerpt": pt::text(description)} | order(name),    "environmental": *[_type == "environmental" && count(zone[@._ref in $zoneIds]) > 0]{  _id,  name,  "slug": slug.current,  "excerpt": pt::text(description)} | order(name)  }
+export type SystemByZoneQueryResult = {
+  approaches: Array<{
+    _id: string;
+    name: string | null;
+    slug: string | null;
+    imageUrl: string | null;
+  }>;
+  structures: Array<{
+    _id: string;
+    name: string | null;
+    slug: string | null;
+    imageUrl: null;
+  }>;
+  parentLures: Array<never>;
+  techniques: Array<{
+    _id: string;
+    name: string | null;
+    slug: string | null;
+    imageUrl: string | null;
+  }>;
+  observational: Array<never>;
+  environmental: Array<never>;
+};
+
+// Source: lib/sanity/queries.ts
+// Variable: factorSlugsQuery
+// Query: *[_type == $type && defined(slug.current)]{ "slug": slug.current }
+export type FactorSlugsQueryResult = Array<{
+  slug: string | null;
+}>;
+
+// Source: lib/sanity/queries.ts
+// Variable: factorBySlugQuery
+// Query: *[_type == $type && slug.current == $slug][0]{    _id,    _type,    name,    id,    "slug": slug.current,    description,    "descriptionText": pt::text(description),    "zoneRefs": zone[]._ref  }
+export type FactorBySlugQueryResult =
+  | {
+      _id: string;
+      _type: "approach";
+      name: string | null;
+      id: string | null;
+      slug: string | null;
+      description: RichText | null;
+      descriptionText: string;
+      zoneRefs: Array<string> | null;
+    }
+  | {
+      _id: string;
+      _type: "baitfish";
+      name: string | null;
+      id: string | null;
+      slug: string | null;
+      description: null;
+      descriptionText: string;
+      zoneRefs: null;
+    }
+  | {
+      _id: string;
+      _type: "blogPost";
+      name: string | null;
+      id: string | null;
+      slug: string | null;
+      description: RichText | null;
+      descriptionText: string;
+      zoneRefs: null;
+    }
+  | {
+      _id: string;
+      _type: "environmental";
+      name: string | null;
+      id: string | null;
+      slug: string | null;
+      description: RichText | null;
+      descriptionText: string;
+      zoneRefs: null;
+    }
+  | {
+      _id: string;
+      _type: "gearPost";
+      name: string | null;
+      id: string | null;
+      slug: string | null;
+      description: RichText | null;
+      descriptionText: string;
+      zoneRefs: null;
+    }
+  | {
+      _id: string;
+      _type: "historical";
+      name: string | null;
+      id: string | null;
+      slug: string | null;
+      description: RichText | null;
+      descriptionText: string;
+      zoneRefs: null;
+    }
+  | {
+      _id: string;
+      _type: "lureCatalog";
+      name: string | null;
+      id: string | null;
+      slug: string | null;
+      description: null;
+      descriptionText: string;
+      zoneRefs: Array<string> | null;
+    }
+  | {
+      _id: string;
+      _type: "lureGearCategory";
+      name: string | null;
+      id: string | null;
+      slug: string | null;
+      description: null;
+      descriptionText: string;
+      zoneRefs: null;
+    }
+  | {
+      _id: string;
+      _type: "method";
+      name: string | null;
+      id: string | null;
+      slug: string | null;
+      description: null;
+      descriptionText: string;
+      zoneRefs: null;
+    }
+  | {
+      _id: string;
+      _type: "microSeason";
+      name: string | null;
+      id: string | null;
+      slug: string | null;
+      description: null;
+      descriptionText: string;
+      zoneRefs: null;
+    }
+  | {
+      _id: string;
+      _type: "mode";
+      name: string | null;
+      id: string | null;
+      slug: null;
+      description: null;
+      descriptionText: string;
+      zoneRefs: null;
+    }
+  | {
+      _id: string;
+      _type: "observational";
+      name: string | null;
+      id: string | null;
+      slug: string | null;
+      description: RichText | null;
+      descriptionText: string;
+      zoneRefs: null;
+    }
+  | {
+      _id: string;
+      _type: "parentLure";
+      name: string | null;
+      id: string | null;
+      slug: string | null;
+      description: null;
+      descriptionText: string;
+      zoneRefs: null;
+    }
+  | {
+      _id: string;
+      _type: "platform";
+      name: string | null;
+      id: string | null;
+      slug: string | null;
+      description: null;
+      descriptionText: string;
+      zoneRefs: null;
+    }
+  | {
+      _id: string;
+      _type: "post-type";
+      name: string | null;
+      id: string | null;
+      slug: string | null;
+      description: null;
+      descriptionText: string;
+      zoneRefs: null;
+    }
+  | {
+      _id: string;
+      _type: "region";
+      name: string | null;
+      id: string | null;
+      slug: string | null;
+      description: null;
+      descriptionText: string;
+      zoneRefs: null;
+    }
+  | {
+      _id: string;
+      _type: "sanity.fileAsset";
+      name: null;
+      id: null;
+      slug: null;
+      description: string | null;
+      descriptionText: string;
+      zoneRefs: null;
+    }
+  | {
+      _id: string;
+      _type: "sanity.imageAsset";
+      name: null;
+      id: null;
+      slug: null;
+      description: string | null;
+      descriptionText: string;
+      zoneRefs: null;
+    }
+  | {
+      _id: string;
+      _type: "season";
+      name: string | null;
+      id: string | null;
+      slug: string | null;
+      description: null;
+      descriptionText: string;
+      zoneRefs: null;
+    }
+  | {
+      _id: string;
+      _type: "speciesPost";
+      name: string | null;
+      id: string | null;
+      slug: string | null;
+      description: RichText | null;
+      descriptionText: string;
+      zoneRefs: null;
+    }
+  | {
+      _id: string;
+      _type: "spot";
+      name: string | null;
+      id: string | null;
+      slug: string | null;
+      description: null;
+      descriptionText: string;
+      zoneRefs: Array<string> | null;
+    }
+  | {
+      _id: string;
+      _type: "structure";
+      name: string | null;
+      id: string | null;
+      slug: string | null;
+      description: RichText | null;
+      descriptionText: string;
+      zoneRefs: Array<string> | null;
+    }
+  | {
+      _id: string;
+      _type: "structureType";
+      name: string | null;
+      id: string | null;
+      slug: string | null;
+      description: null;
+      descriptionText: string;
+      zoneRefs: null;
+    }
+  | {
+      _id: string;
+      _type: "targetSpecies";
+      name: string | null;
+      id: string | null;
+      slug: string | null;
+      description: null;
+      descriptionText: string;
+      zoneRefs: null;
+    }
+  | {
+      _id: string;
+      _type: "techniqueRetrieve";
+      name: string | null;
+      id: string | null;
+      slug: string | null;
+      description: RichText | null;
+      descriptionText: string;
+      zoneRefs: Array<string> | null;
+    }
+  | {
+      _id: string;
+      _type: "video";
+      name: string | null;
+      id: string | null;
+      slug: string | null;
+      description: RichText | null;
+      descriptionText: string;
+      zoneRefs: Array<string> | null;
+    }
+  | {
+      _id: string;
+      _type: "zone";
+      name: string | null;
+      id: string | null;
+      slug: string | null;
+      description: null;
+      descriptionText: string;
+      zoneRefs: null;
+    }
+  | null;
+
+// Source: lib/sanity/queries.ts
 // Variable: speciesPostsIndexQuery
 // Query: *[_type == "speciesPost" && defined(slug.current)]{    _id,    _type,    name,    "slug": slug.current,    "excerpt": array::join(string::split(pt::text(description), " ")[0...45], " "),    "species": targetSpecies[]{  "r": *[_type == "targetSpecies" && ("drafts." + _id == ^._ref || _id == ^._ref)][0]{    "name": name, "slug": slug.current  }}.r,    "baitfish": baitfish[]{  "r": *[_type == "baitfish" && ("drafts." + _id == ^._ref || _id == ^._ref)][0]{    "name": name, "slug": slug.current  }}.r  } | order(name)
 export type SpeciesPostsIndexQueryResult = Array<{
@@ -1974,6 +2284,40 @@ export type SearchIndexQueryResult = {
   }>;
 };
 
+// Source: lib/sanity/queries.ts
+// Variable: homepageSeasonQuery
+// Query: {    "videos": *[_type == "video" && defined(slug.current)      && count(targetspecies[@._ref in $speciesIds]) > 0]{      _id,      "title": coalesce(name, youtubeTitle),      "slug": slug.current,      videoID,      watchURL,      videoFilmDate,      "speciesRefs": targetspecies[@._ref in $speciesIds]._ref,      "region": *[_type == "region" && ("drafts." + _id == ^.region._ref || _id == ^.region._ref)][0]{        name,        "slug": slug.current      }    } | order(videoFilmDate desc)[0...24],    "spots": *[_type == "spot" && defined(slug.current)      && count(targetSpecies[@._ref in $speciesIds]) > 0]{        _id,  name,  id,  "slug": slug.current,  "summary": pt::text(coalesce(spotCard, captMikeNotes)),      "speciesRefs": targetSpecies[@._ref in $speciesIds]._ref    } | order(coalesce(publishDate, _createdAt) desc)[0...24],    "howTos": *[_type == "speciesPost" && defined(slug.current)      && count(targetSpecies[@._ref in $speciesIds]) > 0]{      _id,      name,      "slug": slug.current,      "excerpt": array::join(string::split(pt::text(description), " ")[0...45], " "),      "speciesRefs": targetSpecies[@._ref in $speciesIds]._ref    } | order(name)[0...24]  }
+export type HomepageSeasonQueryResult = {
+  videos: Array<{
+    _id: string;
+    title: string | null;
+    slug: string | null;
+    videoID: string | null;
+    watchURL: string | null;
+    videoFilmDate: string | null;
+    speciesRefs: Array<string> | null;
+    region: {
+      name: string | null;
+      slug: string | null;
+    } | null;
+  }>;
+  spots: Array<{
+    _id: string;
+    name: string | null;
+    id: string | null;
+    slug: string | null;
+    summary: string;
+    speciesRefs: Array<string> | null;
+  }>;
+  howTos: Array<{
+    _id: string;
+    name: string | null;
+    slug: string | null;
+    excerpt: string;
+    speciesRefs: Array<string> | null;
+  }>;
+};
+
 // Query TypeMap
 import "@sanity/client";
 declare module "@sanity/client" {
@@ -1992,6 +2336,9 @@ declare module "@sanity/client" {
     '\n  *[_type in $types && defined(slug.current)]{\n    _id,\n    name,\n    id,\n    "slug": slug.current\n  } | order(name)\n': TaxonomyIndexQueryResult;
     '\n  *[_type in $types && slug.current == $slug][0]{\n    _id,\n    _type,\n    name,\n    id,\n    "slug": slug.current,\n    description,\n    "descriptionText": pt::text(description),\n    // Approach-only: the featured route diagram (plain ImageKit URL). Null for\n    // every other taxonomy type, so the template just renders it when present.\n    featuredDiagramUrl\n  }\n': TaxonomyDocBySlugQueryResult;
     '\n  *[_type == "spot" && references($ids)]{\n    \n  _id,\n  name,\n  id,\n  "slug": slug.current,\n  "summary": pt::text(coalesce(spotCard, captMikeNotes))\n\n  } | order(name)\n': TaxonomyReverseSpotsQueryResult;
+    '\n  {\n    "approaches": *[_type == "approach" && count(zone[@._ref in $zoneIds]) > 0]{\n  _id,\n  name,\n  "slug": slug.current,\n  "imageUrl": coalesce(featuredDiagramUrl, imageURL)\n} | order(name),\n    "structures": *[_type == "structure" && count(zone[@._ref in $zoneIds]) > 0]{\n  _id,\n  name,\n  "slug": slug.current,\n  "imageUrl": coalesce(featuredDiagramUrl, imageURL)\n} | order(name),\n    "parentLures": *[_type == "parentLure" && count(zone[@._ref in $zoneIds]) > 0]{\n  _id,\n  name,\n  "slug": slug.current,\n  "imageUrl": coalesce(featuredDiagramUrl, imageURL)\n} | order(name),\n    "techniques": *[_type == "techniqueRetrieve" && count(zone[@._ref in $zoneIds]) > 0]{\n  _id,\n  name,\n  "slug": slug.current,\n  "imageUrl": coalesce(featuredDiagramUrl, imageURL)\n} | order(name),\n    "observational": *[_type == "observational" && count(zone[@._ref in $zoneIds]) > 0]{\n  _id,\n  name,\n  "slug": slug.current,\n  "excerpt": pt::text(description)\n} | order(name),\n    "environmental": *[_type == "environmental" && count(zone[@._ref in $zoneIds]) > 0]{\n  _id,\n  name,\n  "slug": slug.current,\n  "excerpt": pt::text(description)\n} | order(name)\n  }\n': SystemByZoneQueryResult;
+    '\n  *[_type == $type && defined(slug.current)]{ "slug": slug.current }\n': FactorSlugsQueryResult;
+    '\n  *[_type == $type && slug.current == $slug][0]{\n    _id,\n    _type,\n    name,\n    id,\n    "slug": slug.current,\n    description,\n    "descriptionText": pt::text(description),\n    "zoneRefs": zone[]._ref\n  }\n': FactorBySlugQueryResult;
     '\n  *[_type == "speciesPost" && defined(slug.current)]{\n    _id,\n    _type,\n    name,\n    "slug": slug.current,\n    "excerpt": array::join(string::split(pt::text(description), " ")[0...45], " "),\n    "species": targetSpecies[]{\n  "r": *[_type == "targetSpecies" && ("drafts." + _id == ^._ref || _id == ^._ref)][0]{\n    "name": name, "slug": slug.current\n  }\n}.r,\n    "baitfish": baitfish[]{\n  "r": *[_type == "baitfish" && ("drafts." + _id == ^._ref || _id == ^._ref)][0]{\n    "name": name, "slug": slug.current\n  }\n}.r\n  } | order(name)\n': SpeciesPostsIndexQueryResult;
     '\n  *[_type == "speciesPost" && defined(slug.current)]{ "slug": slug.current }\n': SpeciesPostSlugsQueryResult;
     '\n  *[_type == "speciesPost" && slug.current == $slug][0]{\n    _id,\n    _type,\n    name,\n    id,\n    "slug": slug.current,\n    description,\n    "descriptionText": pt::text(description),\n    "species": targetSpecies[]{\n  "r": *[_type == "targetSpecies" && ("drafts." + _id == ^._ref || _id == ^._ref)][0]{\n    "name": name, "slug": slug.current\n  }\n}.r,\n    "baitfish": baitfish[]{\n  "r": *[_type == "baitfish" && ("drafts." + _id == ^._ref || _id == ^._ref)][0]{\n    "name": name, "slug": slug.current\n  }\n}.r\n  }\n': SpeciesPostBySlugQueryResult;
@@ -2002,5 +2349,6 @@ declare module "@sanity/client" {
     '\n  *[_type == "spot" && slug.current == $slug][0]{\n    \n  _id,\n  name,\n  id,\n  "slug": slug.current,\n  "summary": pt::text(coalesce(spotCard, captMikeNotes))\n\n  }\n': SpotCardBySlugQueryResult;
     '\n  *[_type == "spot" && defined(slug.current) && (\n    string::startsWith(id, $code + ".") || string::startsWith(id, $code + "_")\n  )]{\n    \n  _id,\n  name,\n  id,\n  "slug": slug.current,\n  "summary": pt::text(coalesce(spotCard, captMikeNotes))\n\n  } | order(name)\n': SpotCardsByRegionQueryResult;
     '\n  {\n    "spots": *[_type == "spot" && defined(slug.current)]{\n      _id, _type, id, name, "slug": slug.current,\n      "body": pt::text(spotCard) + " " + pt::text(captMikeNotes) + " " +\n        pt::text(historicalAnalysis) + " " + pt::text(environmentalFactors) + " " +\n        pt::text(observationalFactors) + " " + pt::text(structureApproach) + " " +\n        pt::text(gearTechnique) + " " + pt::text(QAcaptMike)\n    },\n    "videos": *[_type == "video" && defined(slug.current)]{\n      _id, _type, id, "slug": slug.current,\n      "name": coalesce(name, youtubeTitle),\n      "body": pt::text(description),\n      "regionName": *[_type == "region" && ("drafts." + _id == ^.region._ref || _id == ^.region._ref)][0].name\n    },\n    "approaches": *[_type == "approach" && defined(slug.current)]{\n      _id, _type, id, name, "slug": slug.current, "body": pt::text(description)\n    },\n    "structures": *[_type in ["structure", "structureType"] && defined(slug.current)]{\n      _id, _type, id, name, "slug": slug.current, "body": pt::text(description)\n    },\n    "techniques": *[_type == "techniqueRetrieve" && defined(slug.current)]{\n      _id, _type, id, name, "slug": slug.current, "body": pt::text(description)\n    },\n    "baitfish": *[_type == "baitfish" && defined(slug.current)]{\n      _id, _type, id, name, "slug": slug.current, "body": pt::text(description)\n    },\n    "species": *[_type == "targetSpecies" && defined(slug.current)]{\n      _id, _type, id, name, "slug": slug.current, "body": pt::text(description)\n    },\n    "gearPosts": *[_type == "gearPost" && defined(slug.current)]{\n      _id, _type, id, name, "slug": slug.current, "body": pt::text(description)\n    },\n    "lures": *[_type == "lureCatalog" && defined(slug.current)]{\n      _id, _type, id, name, "slug": slug.current, "body": pt::text(description)\n    },\n    "parentLures": *[_type == "parentLure" && defined(slug.current)]{\n      _id, _type, id, name, "slug": slug.current, "body": pt::text(description)\n    },\n    "regions": *[_type == "region" && defined(slug.current)]{\n      _id, _type, id, name, "slug": slug.current, "body": pt::text(description)\n    },\n    "seasons": *[_type == "season" && defined(slug.current)]{\n      _id, _type, id, name, "slug": slug.current, "body": pt::text(description)\n    },\n    "zones": *[_type == "zone" && defined(slug.current)]{\n      _id, _type, id, name, "slug": slug.current, "body": pt::text(description)\n    },\n    "microSeasons": *[_type == "microSeason" && defined(slug.current)]{\n      _id, _type, id, name, "slug": slug.current, "body": pt::text(description)\n    }\n  }\n': SearchIndexQueryResult;
+    '\n  {\n    "videos": *[_type == "video" && defined(slug.current)\n      && count(targetspecies[@._ref in $speciesIds]) > 0]{\n      _id,\n      "title": coalesce(name, youtubeTitle),\n      "slug": slug.current,\n      videoID,\n      watchURL,\n      videoFilmDate,\n      "speciesRefs": targetspecies[@._ref in $speciesIds]._ref,\n      "region": *[_type == "region" && ("drafts." + _id == ^.region._ref || _id == ^.region._ref)][0]{\n        name,\n        "slug": slug.current\n      }\n    } | order(videoFilmDate desc)[0...24],\n\n    "spots": *[_type == "spot" && defined(slug.current)\n      && count(targetSpecies[@._ref in $speciesIds]) > 0]{\n      \n  _id,\n  name,\n  id,\n  "slug": slug.current,\n  "summary": pt::text(coalesce(spotCard, captMikeNotes))\n,\n      "speciesRefs": targetSpecies[@._ref in $speciesIds]._ref\n    } | order(coalesce(publishDate, _createdAt) desc)[0...24],\n\n    "howTos": *[_type == "speciesPost" && defined(slug.current)\n      && count(targetSpecies[@._ref in $speciesIds]) > 0]{\n      _id,\n      name,\n      "slug": slug.current,\n      "excerpt": array::join(string::split(pt::text(description), " ")[0...45], " "),\n      "speciesRefs": targetSpecies[@._ref in $speciesIds]._ref\n    } | order(name)[0...24]\n  }\n': HomepageSeasonQueryResult;
   }
 }
